@@ -1,0 +1,33 @@
+page_title: Remote API v1.15
+page_description: API Documentation for Docker
+page_keywords: API, Docker, rcli, REST, documentation
+no_toc: true
+
+<script type="text/javascript">
+
+    function loadSwaggerUI() {
+        var url = "/swagger/specs/docker-v1.14.json";
+        window.swaggerUi = new SwaggerUi({
+            url: url,
+            dom_id: "swagger-ui-container",
+            docExpansion: "list",
+            sorter : "alpha",
+            onComplete: function(swaggerApi, swaggerUi){
+              log("Loaded SwaggerUI");
+            },
+            onFailure: function(data) {
+              log("Unable to Load SwaggerUI");
+            }
+        });
+        window.swaggerUi.load();
+    }
+
+    window.addEventListener('load', loadSwaggerUI, false);
+</script>
+
+<div class="swagger-section">
+
+<div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
+<div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+
+</div>
