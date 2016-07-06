@@ -519,6 +519,7 @@ func (d *Daemon) buildImageWithOut(name, dockerfile string, useCache bool, build
 	return runCommandWithOutput(buildCmd)
 }
 
+// TODO: move to activeConatinerCount()
 func (d *Daemon) checkActiveContainerCount(c *check.C) (interface{}, check.CommentInterface) {
 	out, err := d.Cmd("ps", "-q")
 	c.Assert(err, checker.IsNil)

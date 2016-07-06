@@ -306,21 +306,29 @@ func (s *DockerSwarmSuite) TestApiSwarmServicesEmptyList(c *check.C) {
 	c.Assert(len(services), checker.Equals, 0, check.Commentf("services: %#v", services))
 }
 
+func activeContainerCount(d *SwarmDaemon, expected int) checker.WaitCondition {
+	return checker.WaitCondition{
+		CheckFunc: d.checkActiveContainerCount,
+		Expected:  []interface{}{expected},
+		Checker:   checker.Equals,
+	}
+}
+
 func (s *DockerSwarmSuite) TestApiSwarmServicesCreate(c *check.C) {
 	testRequires(c, Network)
 	d := s.AddDaemon(c, true, true)
 
 	instances := 2
 	id := d.createService(c, simpleTestService, setInstances(instances))
-	waitAndAssert(c, defaultReconciliationTimeout, d.checkActiveContainerCount, checker.Equals, instances)
+	checker.WaitOn(c, activeContainerCount(d, instances))
 
 	service := d.getService(c, id)
 	instances = 5
 	d.updateService(c, service, setInstances(instances))
-	waitAndAssert(c, defaultReconciliationTimeout, d.checkActiveContainerCount, checker.Equals, instances)
+	checker.WaitOn(c, activeContainerCount(d, instances))
 
 	d.removeService(c, service.ID)
-	waitAndAssert(c, defaultReconciliationTimeout, d.checkActiveContainerCount, checker.Equals, 0)
+	checker.WaitOn(c, activeContainerCount(d, 0))
 }
 
 func (s *DockerSwarmSuite) TestApiSwarmServicesMultipleAgents(c *check.C) {

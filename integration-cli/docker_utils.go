@@ -1521,6 +1521,7 @@ func getErrorMessage(c *check.C, body []byte) string {
 	return strings.TrimSpace(resp.Message)
 }
 
+// TODO: remove
 func waitAndAssert(c *check.C, timeout time.Duration, f checkF, checker check.Checker, args ...interface{}) {
 	after := time.After(timeout)
 	for {
