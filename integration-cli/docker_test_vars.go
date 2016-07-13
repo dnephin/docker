@@ -129,3 +129,7 @@ func init() {
 	volumesConfigPath = dockerBasePath + "/volumes"
 	containerStoragePath = dockerBasePath + "/containers"
 }
+
+func IsLocalDaemon() bool {
+	return isLocalDaemon
+}

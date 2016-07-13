@@ -8,25 +8,17 @@ import (
 	"testing"
 
 	"github.com/docker/docker/cliconfig"
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/docker/engine-api/types/swarm"
 	"github.com/go-check/check"
 )
 
-func Test(t *testing.T) {
-	reexec.Init() // This is required for external graphdriver tests
-
-	if !isLocalDaemon {
-		fmt.Println("INFO: Testing against a remote daemon")
-	} else {
-		fmt.Println("INFO: Testing against a local daemon")
-	}
-
-	check.TestingT(t)
-}
-
-func init() {
+func AddSuites() {
 	check.Suite(&DockerSuite{})
+	check.Suite(&DockerRegistrySuite{ds: &DockerSuite{}})
+	check.Suite(&DockerSchema1RegistrySuite{ds: &DockerSuite{}})
+	check.Suite(&DockerRegistryAuthHtpasswdSuite{ds: &DockerSuite{}})
+	check.Suite(&DockerRegistryAuthTokenSuite{ds: &DockerSuite{}})
+	check.Suite(&DockerDaemonSuite{ds: &DockerSuite{}})
 }
 
 type DockerSuite struct {
@@ -38,12 +30,6 @@ func (s *DockerSuite) TearDownTest(c *check.C) {
 	deleteAllImages()
 	deleteAllVolumes()
 	deleteAllNetworks()
-}
-
-func init() {
-	check.Suite(&DockerRegistrySuite{
-		ds: &DockerSuite{},
-	})
 }
 
 type DockerRegistrySuite struct {
@@ -68,12 +54,6 @@ func (s *DockerRegistrySuite) TearDownTest(c *check.C) {
 	s.ds.TearDownTest(c)
 }
 
-func init() {
-	check.Suite(&DockerSchema1RegistrySuite{
-		ds: &DockerSuite{},
-	})
-}
-
 type DockerSchema1RegistrySuite struct {
 	ds  *DockerSuite
 	reg *testRegistryV2
@@ -94,12 +74,6 @@ func (s *DockerSchema1RegistrySuite) TearDownTest(c *check.C) {
 		s.d.Stop()
 	}
 	s.ds.TearDownTest(c)
-}
-
-func init() {
-	check.Suite(&DockerRegistryAuthHtpasswdSuite{
-		ds: &DockerSuite{},
-	})
 }
 
 type DockerRegistryAuthHtpasswdSuite struct {
@@ -124,12 +98,6 @@ func (s *DockerRegistryAuthHtpasswdSuite) TearDownTest(c *check.C) {
 		s.d.Stop()
 	}
 	s.ds.TearDownTest(c)
-}
-
-func init() {
-	check.Suite(&DockerRegistryAuthTokenSuite{
-		ds: &DockerSuite{},
-	})
 }
 
 type DockerRegistryAuthTokenSuite struct {
@@ -160,12 +128,6 @@ func (s *DockerRegistryAuthTokenSuite) setupRegistryWithTokenService(c *check.C,
 		c.Fatal("registry suite isn't initialized")
 	}
 	s.reg = setupRegistry(c, false, "token", tokenURL)
-}
-
-func init() {
-	check.Suite(&DockerDaemonSuite{
-		ds: &DockerSuite{},
-	})
 }
 
 type DockerDaemonSuite struct {
