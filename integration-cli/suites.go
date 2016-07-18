@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"testing"
 
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/engine-api/types/swarm"

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+export ABS_DEST
+base="$ABS_DEST/.."
+export PATH="$base/binary-client:$base/binary-daemon:$base/dynbinary-client:$base/dynbinary-daemon:$base/gccgo:$base/dyngccgo:$PATH"
+
+bundle .integration-daemon-start
+bundle .integration-daemon-setup
+
+exec bash +e
