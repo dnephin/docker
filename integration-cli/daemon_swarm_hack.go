@@ -1,3 +1,5 @@
+// +build test
+
 package integration
 
 import "github.com/go-check/check"
