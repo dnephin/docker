@@ -1,6 +1,6 @@
 // +build !seccomp
 
-package main
+package integration
 
 const (
 	// indicates docker daemon built with seccomp support

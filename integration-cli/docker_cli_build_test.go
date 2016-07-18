@@ -1,4 +1,4 @@
-package main
+package integration
 
 import (
 	"archive/tar"
@@ -1920,9 +1920,9 @@ func (s *DockerSuite) TestBuildWindowsAddCopyPathProcessing(c *check.C) {
 			ADD wc2 c:/wc2
 			WORKDIR c:/
 			RUN sh -c "[ $(cat c:/wc1) = 'hellowc1' ]"
-			RUN sh -c "[ $(cat c:/wc2) = 'worldwc2' ]"			
+			RUN sh -c "[ $(cat c:/wc2) = 'worldwc2' ]"
 
-			# Trailing slash on COPY/ADD, Windows-style path. 
+			# Trailing slash on COPY/ADD, Windows-style path.
 			WORKDIR /wd1
 			COPY wd1 c:/wd1/
 			WORKDIR /wd2

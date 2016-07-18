@@ -1,6 +1,6 @@
 // +build !test_no_exec
 
-package main
+package integration
 
 import (
 	"bytes"

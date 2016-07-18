@@ -1,6 +1,6 @@
 // +build windows
 
-package main
+package integration
 
 const (
 	// identifies if test suite is running on a unix platform

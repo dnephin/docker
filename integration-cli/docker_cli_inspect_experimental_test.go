@@ -1,6 +1,6 @@
 // +build experimental
 
-package main
+package integration
 
 import (
 	"github.com/docker/docker/pkg/integration/checker"

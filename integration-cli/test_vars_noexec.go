@@ -1,6 +1,6 @@
 // +build test_no_exec
 
-package main
+package integration
 
 const (
 	// indicates docker daemon tested supports 'docker exec'

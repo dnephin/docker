@@ -1,6 +1,6 @@
 // +build linux, experimental
 
-package main
+package integration
 
 import (
 	"os"

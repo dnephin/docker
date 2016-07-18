@@ -1,6 +1,6 @@
 // +build !windows
 
-package main
+package integration
 
 import (
 	"encoding/json"

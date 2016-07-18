@@ -1,7 +1,7 @@
 // This file will be removed when we completely drop support for
 // passing HostConfig to container start API.
 
-package main
+package integration
 
 import (
 	"net/http"
