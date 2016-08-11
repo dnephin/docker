@@ -50,17 +50,14 @@ type clientConfig struct {
 }
 
 // NewDaemon returns a Daemon instance to be used for testing.
-// This will create a directory such as d123456789 in the folder specified by $DEST.
+// This will create a directory such as d123456789 in /tmp/docker-integration.
 // The daemon will not automatically start.
 func NewDaemon(c *check.C) *Daemon {
-	dest := os.Getenv("DEST")
-	c.Assert(dest, check.Not(check.Equals), "", check.Commentf("Please set the DEST environment variable"))
-
 	err := os.MkdirAll(daemonSockRoot, 0700)
 	c.Assert(err, checker.IsNil, check.Commentf("could not create daemon socket root"))
 
 	id := fmt.Sprintf("d%d", time.Now().UnixNano()%100000000)
-	dir := filepath.Join(dest, id)
+	dir := filepath.Join(daemonSockRoot, id)
 	daemonFolder, err := filepath.Abs(dir)
 	c.Assert(err, check.IsNil, check.Commentf("Could not make %q an absolute path", dir))
 	daemonRoot := filepath.Join(daemonFolder, "root")
@@ -143,7 +140,6 @@ func (d *Daemon) StartWithLogFile(out *os.File, providedArgs ...string) error {
 	d.c.Assert(err, check.IsNil, check.Commentf("[%s] could not find docker binary in $PATH", d.id))
 
 	args := append(d.GlobalFlags,
-		"--containerd", "/var/run/docker/libcontainerd/docker-containerd.sock",
 		"--graph", d.root,
 		"--exec-root", filepath.Join(d.folder, "exec-root"),
 		"--pidfile", fmt.Sprintf("%s/docker.pid", d.folder),
@@ -154,6 +150,12 @@ func (d *Daemon) StartWithLogFile(out *os.File, providedArgs ...string) error {
 	}
 	if root := os.Getenv("DOCKER_REMAP_ROOT"); root != "" {
 		args = append(args, []string{"--userns-remap", root}...)
+	}
+
+	containerdSock := "/var/run/docker/libcontainerd/docker-containerd.sock"
+	// Use the containerd socket if it exists
+	if _, err := os.Stat(containerdSock); err == nil {
+		args = append(args, "--containerd", containerdSock)
 	}
 
 	// If we don't explicitly set the log-level or debug flag(-D) then
@@ -177,6 +179,8 @@ func (d *Daemon) StartWithLogFile(out *os.File, providedArgs ...string) error {
 
 	args = append(args, providedArgs...)
 	d.cmd = exec.Command(dockerdBinary, args...)
+
+	fmt.Printf("%v\n", d.cmd.Args)
 	d.cmd.Env = append(os.Environ(), "DOCKER_SERVICE_PREFER_OFFLINE_IMAGE=1")
 	d.cmd.Stdout = out
 	d.cmd.Stderr = out
@@ -216,6 +220,7 @@ func (d *Daemon) StartWithLogFile(out *os.File, providedArgs ...string) error {
 
 			client := &http.Client{
 				Transport: clientConfig.transport,
+				Timeout:   2 * time.Second,
 			}
 
 			req, err := http.NewRequest("GET", "/_ping", nil)
