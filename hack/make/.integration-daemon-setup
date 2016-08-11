@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+# TODO: maybe move to a lib?
+bundle() {
+	local bundle="$1"; shift
+	source "$SCRIPTDIR/make/$bundle" "$@"
+}
+
 bundle .detect-daemon-osarch
 if [ $DOCKER_ENGINE_GOOS != "windows" ]; then
 	bundle .ensure-emptyfs

@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/docker/docker/cliconfig"
+	ifixtures "github.com/docker/docker/pkg/integration/fixtures"
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/docker/docker/pkg/testutil/fixtures"
 	"github.com/docker/engine-api/types/swarm"
 	"github.com/go-check/check"
 )
@@ -24,6 +26,7 @@ func Test(t *testing.T) {
 	}
 
 	check.TestingT(t)
+	fixtures.Cleanup(t, fixtures.Global)
 }
 
 func init() {
@@ -39,6 +42,18 @@ func (s *DockerSuite) TearDownTest(c *check.C) {
 	deleteAllImages()
 	deleteAllVolumes()
 	deleteAllNetworks()
+}
+
+func (s *DockerSuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerSuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
 }
 
 func init() {

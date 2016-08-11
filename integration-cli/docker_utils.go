@@ -33,18 +33,7 @@ import (
 	"github.com/go-check/check"
 )
 
-func init() {
-	cmd := exec.Command(dockerBinary, "images", "-f", "dangling=false", "--format", "{{.Repository}}:{{.Tag}}")
-	cmd.Env = appendBaseEnv(true)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		panic(fmt.Errorf("err=%v\nout=%s\n", err, out))
-	}
-	images := strings.Split(strings.TrimSpace(string(out)), "\n")
-	for _, img := range images {
-		protectedImages[img] = struct{}{}
-	}
-
+func initDaemonPaths() {
 	res, body, err := sockRequestRaw("GET", "/info", nil, "application/json")
 	if err != nil {
 		panic(fmt.Errorf("Init failed to get /info: %v", err))
@@ -341,6 +330,19 @@ func getAllVolumes() ([]*types.Volume, error) {
 }
 
 var protectedImages = map[string]struct{}{}
+
+func initProtectedImages() {
+	cmd := exec.Command(dockerBinary, "images", "-f", "dangling=false", "--format", "{{.Repository}}:{{.Tag}}")
+	cmd.Env = appendBaseEnv(true)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("err=%v\nout=%s\n", err, out))
+	}
+	images := strings.Split(strings.TrimSpace(string(out)), "\n")
+	for _, img := range images {
+		protectedImages[img] = struct{}{}
+	}
+}
 
 func deleteAllImages() error {
 	cmd := exec.Command(dockerBinary, "images")

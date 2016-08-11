@@ -5,14 +5,12 @@ source hack/make/.integration-test-helpers
 
 # subshell so that we can export PATH without breaking other things
 (
-	bundle .integration-daemon-start
+    base="$ABS_DEST/.."
+    export PATH="$base/binary-client:$base/binary-daemon:$base/dynbinary-client:$base/dynbinary-daemon:$base/gccgo:$base/dyngccgo:$PATH"
 
-	bundle .integration-daemon-setup
+    bundle_test_integration_cli
 
-	bundle_test_integration_cli
-
-	bundle .integration-daemon-stop
-
+    # TODO: move to fixture
 	if [ "$(go env GOOS)" != 'windows' ]
 	then
 		leftovers=$(ps -ax -o pid,cmd | awk '$2 == "docker-containerd-shim" && $4 ~ /.*\/bundles\/.*\/test-integration-cli/ { print $1 }')

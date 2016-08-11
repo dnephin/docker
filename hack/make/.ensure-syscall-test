@@ -1,16 +1,20 @@
 #!/bin/bash
 set -e
 
+
+# TODO: go_test_dir cd's into integration-cli which braeks these paths. Remove
+# the need for a cd, then remove '../' from these paths
+
 # Build a C binary for cloning a userns for seccomp tests
 # and compile it for target daemon
 if [ "$DOCKER_ENGINE_GOOS" = "linux" ]; then
 	if [ "$DOCKER_ENGINE_OSARCH" = "$DOCKER_CLIENT_OSARCH" ]; then
 		tmpdir=$(mktemp -d)
-		gcc -g -Wall -static contrib/syscall-test/userns.c -o "${tmpdir}/userns-test"
-		gcc -g -Wall -static contrib/syscall-test/ns.c -o "${tmpdir}/ns-test"
-		gcc -g -Wall -static contrib/syscall-test/acct.c -o "${tmpdir}/acct-test"
+		gcc -g -Wall -static ../contrib/syscall-test/userns.c -o "${tmpdir}/userns-test"
+		gcc -g -Wall -static ../contrib/syscall-test/ns.c -o "${tmpdir}/ns-test"
+		gcc -g -Wall -static ../contrib/syscall-test/acct.c -o "${tmpdir}/acct-test"
 		if [ "$DOCKER_ENGINE_OSARCH" = "linux/amd64" ]; then
-			gcc -s -m32 -nostdlib contrib/syscall-test/exit32.s -o "${tmpdir}/exit32-test"
+			gcc -s -m32 -nostdlib ../contrib/syscall-test/exit32.s -o "${tmpdir}/exit32-test"
 		fi
 
 		dockerfile="${tmpdir}/Dockerfile"
@@ -21,6 +25,6 @@ if [ "$DOCKER_ENGINE_GOOS" = "linux" ]; then
 		docker build --force-rm ${DOCKER_BUILD_ARGS} -qt syscall-test "${tmpdir}" > /dev/null
 		rm -rf "${tmpdir}"
 	else
-		docker build ${DOCKER_BUILD_ARGS} -qt syscall-test contrib/syscall-test > /dev/null
+		docker build ${DOCKER_BUILD_ARGS} -qt syscall-test ../contrib/syscall-test > /dev/null
 	fi
 fi
