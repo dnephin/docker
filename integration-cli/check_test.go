@@ -84,6 +84,18 @@ func (s *DockerRegistrySuite) TearDownTest(c *check.C) {
 	s.ds.TearDownTest(c)
 }
 
+func (s *DockerRegistrySuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerRegistrySuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
+}
+
 func init() {
 	check.Suite(&DockerSchema1RegistrySuite{
 		ds: &DockerSuite{},
@@ -110,6 +122,18 @@ func (s *DockerSchema1RegistrySuite) TearDownTest(c *check.C) {
 		s.d.Stop()
 	}
 	s.ds.TearDownTest(c)
+}
+
+func (s *DockerSchema1RegistrySuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerSchema1RegistrySuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
 }
 
 func init() {
@@ -142,6 +166,18 @@ func (s *DockerRegistryAuthHtpasswdSuite) TearDownTest(c *check.C) {
 	s.ds.TearDownTest(c)
 }
 
+func (s *DockerRegistryAuthHtpasswdSuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerRegistryAuthHtpasswdSuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
+}
+
 func init() {
 	check.Suite(&DockerRegistryAuthTokenSuite{
 		ds: &DockerSuite{},
@@ -171,6 +207,18 @@ func (s *DockerRegistryAuthTokenSuite) TearDownTest(c *check.C) {
 	s.ds.TearDownTest(c)
 }
 
+func (s *DockerRegistryAuthTokenSuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerRegistryAuthTokenSuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
+}
+
 func (s *DockerRegistryAuthTokenSuite) setupRegistryWithTokenService(c *check.C, tokenURL string) {
 	if s == nil {
 		c.Fatal("registry suite isn't initialized")
@@ -190,12 +238,10 @@ type DockerDaemonSuite struct {
 }
 
 func (s *DockerDaemonSuite) SetUpTest(c *check.C) {
-	testRequires(c, DaemonIsLinux)
 	s.d = NewDaemon(c)
 }
 
 func (s *DockerDaemonSuite) TearDownTest(c *check.C) {
-	testRequires(c, DaemonIsLinux)
 	if s.d != nil {
 		s.d.Stop()
 	}
@@ -282,6 +328,18 @@ func (s *DockerSwarmSuite) TearDownTest(c *check.C) {
 	s.ds.TearDownTest(c)
 }
 
+func (s *DockerSwarmSuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerSwarmSuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
+}
+
 func init() {
 	check.Suite(&DockerTrustSuite{
 		ds: &DockerSuite{},
@@ -311,4 +369,16 @@ func (s *DockerTrustSuite) TearDownTest(c *check.C) {
 	// Remove trusted keys and metadata after test
 	os.RemoveAll(filepath.Join(cliconfig.ConfigDir(), "trust"))
 	s.ds.TearDownTest(c)
+}
+
+func (s *DockerTrustSuite) SetUpSuite(c *check.C) {
+	fixtures.Register(c, ifixtures.RunDaemon, fixtures.Global)
+	// TODO: The values initialized by these functions should be fixtures, which
+	// would allow them to be fields on the Suite struct, instead of globals
+	initProtectedImages()
+	initDaemonPaths()
+}
+
+func (s *DockerTrustSuite) TearDownSuite(c *check.C) {
+	fixtures.Cleanup(c, fixtures.Suite)
 }
