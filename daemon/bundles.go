@@ -1,13 +1,24 @@
 package daemon
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"path"
 	"sort"
 	"time"
 
 	"github.com/docker/distribution/digest"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/image/bundle"
+	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/httputils"
+	"github.com/docker/docker/pkg/progress"
+	"github.com/docker/docker/pkg/streamformatter"
 	"github.com/docker/docker/reference"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
@@ -219,4 +230,141 @@ func (daemon *Daemon) LookupBundle(name string) (*types.BundleInspect, error) {
 	}
 
 	return bundleInspect, nil
+}
+
+func (daemon *Daemon) CreateBundle(src, repository, tag string, inConfig io.ReadCloser, outStream io.Writer) error {
+	var (
+		sf     = streamformatter.NewJSONStreamFormatter()
+		rc     io.ReadCloser
+		resp   *http.Response
+		newRef reference.Named
+	)
+
+	if repository != "" {
+		var err error
+		newRef, err = reference.ParseNamed(repository)
+		if err != nil {
+			return err
+		}
+
+		if _, isCanonical := newRef.(reference.Canonical); isCanonical {
+			return errors.New("cannot create a digest reference")
+		}
+
+		if tag != "" {
+			newRef, err = reference.WithTag(newRef, tag)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if src == "-" {
+		rc = inConfig
+	} else {
+		inConfig.Close()
+		u, err := url.Parse(src)
+		if err != nil {
+			return err
+		}
+		if u.Scheme == "" {
+			u.Scheme = "http"
+			u.Host = src
+			u.Path = ""
+		}
+		outStream.Write(sf.FormatStatus("", "Downloading from %s", u))
+		resp, err = httputils.Download(u.String())
+		if err != nil {
+			return err
+		}
+		progressOutput := sf.NewProgressOutput(outStream, true)
+		rc = progress.NewProgressReader(resp.Body, progressOutput, resp.ContentLength, "", "Importing")
+	}
+	defer rc.Close()
+
+	inflatedData, err := archive.DecompressStream(rc)
+	if err != nil {
+		return err
+	}
+
+	config, err := ioutil.ReadAll(inflatedData)
+	if err != nil {
+		return err
+	}
+
+	b, err := bundle.NewFromJSON(config)
+	if err != nil {
+		return err
+	}
+
+	for _, s := range b.Services {
+		_, err := daemon.imageStore.Get(s.Image)
+		if err != nil {
+			return err
+		}
+	}
+
+	remarshal := false
+
+	if b.Created == (time.Time{}) {
+		remarshal = true
+		b.Created = time.Now().UTC()
+	}
+
+	if b.DockerVersion == "" {
+		remarshal = true
+		b.DockerVersion = dockerversion.Version
+	}
+
+	if remarshal {
+		config, err = json.Marshal(b)
+		if err != nil {
+			return err
+		}
+	}
+
+	id, err := daemon.bundleStore.Create(config)
+	if err != nil {
+		return err
+	}
+
+	if newRef != nil {
+		if err := daemon.TagBundleWithReference(id, newRef); err != nil {
+			return err
+		}
+	}
+
+	outStream.Write(sf.FormatStatus("", id.String()))
+
+	return nil
+}
+
+// TagBundle creates the tag specified by newTag, pointing to the bundle named
+// bundleName (alternatively, bundleName can also be an bundle ID).
+func (daemon *Daemon) TagBundle(bundleName, repository, tag string) error {
+	bundleID, err := daemon.GetBundleID(bundleName)
+	if err != nil {
+		return err
+	}
+
+	newTag, err := reference.WithName(repository)
+	if err != nil {
+		return err
+	}
+	if tag != "" {
+		if newTag, err = reference.WithTag(newTag, tag); err != nil {
+			return err
+		}
+	}
+
+	return daemon.TagBundleWithReference(bundleID, newTag)
+}
+
+// TagBundleWithReference adds the given reference to the bundle ID provided.
+func (daemon *Daemon) TagBundleWithReference(bundleID bundle.ID, newTag reference.Named) error {
+	if err := daemon.referenceStore.AddTag(newTag, digest.Digest(bundleID), true); err != nil {
+		return err
+	}
+
+	return nil
 }
