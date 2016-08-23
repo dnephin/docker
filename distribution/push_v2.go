@@ -87,7 +87,7 @@ func (p *v2Pusher) pushV2Repository(ctx context.Context) (err error) {
 			return fmt.Errorf("tag does not exist: %s", p.ref.String())
 		}
 
-		return p.pushV2Tag(ctx, namedTagged, imageID)
+		return p.pushV2Tag(ctx, namedTagged, image.ID(imageID))
 	}
 
 	if !reference.IsNameOnly(p.ref) {
@@ -99,7 +99,7 @@ func (p *v2Pusher) pushV2Repository(ctx context.Context) (err error) {
 	for _, association := range p.config.ReferenceStore.ReferencesByName(p.ref) {
 		if namedTagged, isNamedTagged := association.Ref.(reference.NamedTagged); isNamedTagged {
 			pushed++
-			if err := p.pushV2Tag(ctx, namedTagged, association.ImageID); err != nil {
+			if err := p.pushV2Tag(ctx, namedTagged, image.ID(association.ID)); err != nil {
 				return err
 			}
 		}
@@ -207,7 +207,7 @@ func (p *v2Pusher) pushV2Tag(ctx context.Context, ref reference.NamedTagged, ima
 	manifestDigest := digest.FromBytes(canonicalManifest)
 	progress.Messagef(p.config.ProgressOutput, "", "%s: digest: %s size: %d", ref.Tag(), manifestDigest, len(canonicalManifest))
 
-	if err := addDigestReference(p.config.ReferenceStore, ref, manifestDigest, imageID); err != nil {
+	if err := addDigestReference(p.config.ReferenceStore, ref, manifestDigest, digest.Digest(imageID)); err != nil {
 		return err
 	}
 

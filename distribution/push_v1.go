@@ -149,10 +149,12 @@ func (p *v1Pusher) getImageList() (imageList []v1Image, tagsByImage map[image.ID
 	if isTagged {
 		// Push a specific tag
 		var imgID image.ID
-		imgID, err = p.config.ReferenceStore.Get(p.ref)
+		var dgst digest.Digest
+		dgst, err = p.config.ReferenceStore.Get(p.ref)
 		if err != nil {
 			return
 		}
+		imgID = image.ID(dgst)
 
 		imageList, err = p.imageListForTag(imgID, nil, &referencedLayers)
 		if err != nil {
@@ -174,15 +176,15 @@ func (p *v1Pusher) getImageList() (imageList []v1Image, tagsByImage map[image.ID
 			continue
 		}
 
-		tagsByImage[association.ImageID] = append(tagsByImage[association.ImageID], tagged.Tag())
+		tagsByImage[image.ID(association.ID)] = append(tagsByImage[image.ID(association.ID)], tagged.Tag())
 
-		if _, present := imagesSeen[association.ImageID]; present {
+		if _, present := imagesSeen[image.ID(association.ID)]; present {
 			// Skip generating image list for already-seen image
 			continue
 		}
-		imagesSeen[association.ImageID] = struct{}{}
+		imagesSeen[image.ID(association.ID)] = struct{}{}
 
-		imageListForThisTag, err := p.imageListForTag(association.ImageID, dependenciesSeen, &referencedLayers)
+		imageListForThisTag, err := p.imageListForTag(image.ID(association.ID), dependenciesSeen, &referencedLayers)
 		if err != nil {
 			return nil, nil, nil, err
 		}

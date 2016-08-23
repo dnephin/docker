@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/reference"
@@ -17,7 +18,7 @@ func (daemon *Daemon) LookupImage(name string) (*types.ImageInspect, error) {
 		return nil, fmt.Errorf("No such image: %s", name)
 	}
 
-	refs := daemon.referenceStore.References(img.ID())
+	refs := daemon.referenceStore.References(digest.Digest(img.ID()))
 	repoTags := []string{}
 	repoDigests := []string{}
 	for _, ref := range refs {

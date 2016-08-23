@@ -3,6 +3,7 @@ package daemon
 import (
 	"fmt"
 
+	"github.com/docker/distribution/digest"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/image"
@@ -10,12 +11,12 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
-// ErrImageDoesNotExist is error returned when no image can be found for a reference.
-type ErrImageDoesNotExist struct {
+// ErrRefDoesNotExist is error returned when no image can be found for a reference.
+type ErrRefDoesNotExist struct {
 	RefOrID string
 }
 
-func (e ErrImageDoesNotExist) Error() string {
+func (e ErrRefDoesNotExist) Error() string {
 	return fmt.Sprintf("no such id: %s", e.RefOrID)
 }
 
@@ -28,17 +29,17 @@ func (daemon *Daemon) GetImageID(refOrID string) (image.ID, error) {
 	}
 	if id != "" {
 		if _, err := daemon.imageStore.Get(image.ID(id)); err != nil {
-			return "", ErrImageDoesNotExist{refOrID}
+			return "", ErrRefDoesNotExist{refOrID}
 		}
 		return image.ID(id), nil
 	}
 
 	if id, err := daemon.referenceStore.Get(ref); err == nil {
-		return id, nil
+		return image.ID(id), nil
 	}
 	if tagged, ok := ref.(reference.NamedTagged); ok {
 		if id, err := daemon.imageStore.Search(tagged.Tag()); err == nil {
-			for _, namedRef := range daemon.referenceStore.References(id) {
+			for _, namedRef := range daemon.referenceStore.References(digest.Digest(id)) {
 				if namedRef.Name() == ref.Name() {
 					return id, nil
 				}
@@ -51,7 +52,7 @@ func (daemon *Daemon) GetImageID(refOrID string) (image.ID, error) {
 		return id, nil
 	}
 
-	return "", ErrImageDoesNotExist{refOrID}
+	return "", ErrRefDoesNotExist{refOrID}
 }
 
 // GetImage returns an image corresponding to the image referred to by refOrID.

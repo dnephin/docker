@@ -398,26 +398,28 @@ func (p *v2Puller) pullV2Tag(ctx context.Context, ref reference.Named) (tagUpdat
 		return false, errors.New("unsupported manifest format")
 	}
 
+	id := digest.Digest(imageID) // TODO: pull methods should return generic IDs
+
 	progress.Message(p.config.ProgressOutput, "", "Digest: "+manifestDigest.String())
 
-	oldTagImageID, err := p.config.ReferenceStore.Get(ref)
+	oldTagID, err := p.config.ReferenceStore.Get(ref)
 	if err == nil {
-		if oldTagImageID == imageID {
-			return false, addDigestReference(p.config.ReferenceStore, ref, manifestDigest, imageID)
+		if oldTagID == id {
+			return false, addDigestReference(p.config.ReferenceStore, ref, manifestDigest, id)
 		}
 	} else if err != reference.ErrDoesNotExist {
 		return false, err
 	}
 
 	if canonical, ok := ref.(reference.Canonical); ok {
-		if err = p.config.ReferenceStore.AddDigest(canonical, imageID, true); err != nil {
+		if err = p.config.ReferenceStore.AddDigest(canonical, id, true); err != nil {
 			return false, err
 		}
 	} else {
-		if err = addDigestReference(p.config.ReferenceStore, ref, manifestDigest, imageID); err != nil {
+		if err = addDigestReference(p.config.ReferenceStore, ref, manifestDigest, id); err != nil {
 			return false, err
 		}
-		if err = p.config.ReferenceStore.AddTag(ref, imageID, true); err != nil {
+		if err = p.config.ReferenceStore.AddTag(ref, id, true); err != nil {
 			return false, err
 		}
 	}

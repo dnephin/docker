@@ -9,7 +9,7 @@ import (
 )
 
 func (d *Daemon) imageNotExistToErrcode(err error) error {
-	if dne, isDNE := err.(ErrImageDoesNotExist); isDNE {
+	if dne, isDNE := err.(ErrRefDoesNotExist); isDNE {
 		if strings.Contains(dne.RefOrID, "@") {
 			e := fmt.Errorf("No such image: %s", dne.RefOrID)
 			return errors.NewRequestNotFoundError(e)

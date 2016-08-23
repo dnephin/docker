@@ -3,6 +3,7 @@ package daemon
 import (
 	"fmt"
 
+	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/reference"
@@ -60,7 +61,7 @@ func (daemon *Daemon) ImageHistory(name string) ([]*types.ImageHistory, error) {
 		h.ID = id.String()
 
 		var tags []string
-		for _, r := range daemon.referenceStore.References(id) {
+		for _, r := range daemon.referenceStore.References(digest.Digest(id)) {
 			if _, ok := r.(reference.NamedTagged); ok {
 				tags = append(tags, r.String())
 			}
