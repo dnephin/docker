@@ -61,8 +61,8 @@ func NewImageStore(fs StoreBackend, ls LayerGetReleaser) (Store, error) {
 }
 
 func (is *store) restore() error {
-	err := is.fs.Walk(func(id ID) error {
-		img, err := is.Get(id)
+	err := is.fs.Walk(func(id digest.Digest) error {
+		img, err := is.Get(ID(id))
 		if err != nil {
 			logrus.Errorf("invalid image %v, %v", id, err)
 			return nil
@@ -74,7 +74,7 @@ func (is *store) restore() error {
 				return err
 			}
 		}
-		if err := is.digestSet.Add(digest.Digest(id)); err != nil {
+		if err := is.digestSet.Add(id); err != nil {
 			return err
 		}
 
@@ -181,7 +181,7 @@ func (is *store) Search(term string) (ID, error) {
 func (is *store) Get(id ID) (*Image, error) {
 	// todo: Check if image is in images
 	// todo: Detect manual insertions and start using them
-	config, err := is.fs.Get(id)
+	config, err := is.fs.Get(digest.Digest(id))
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (is *store) Delete(id ID) ([]layer.Metadata, error) {
 		return nil, fmt.Errorf("unrecognized image ID %s", id.String())
 	}
 	for id := range imageMeta.children {
-		is.fs.DeleteMetadata(id, "parent")
+		is.fs.DeleteMetadata(digest.Digest(id), "parent")
 	}
 	if parent, err := is.GetParent(id); err == nil && is.images[parent] != nil {
 		delete(is.images[parent].children, id)
@@ -219,7 +219,7 @@ func (is *store) Delete(id ID) ([]layer.Metadata, error) {
 		logrus.Errorf("error removing %s from digest set: %q", id, err)
 	}
 	delete(is.images, id)
-	is.fs.Delete(id)
+	is.fs.Delete(digest.Digest(id))
 
 	if imageMeta.layer != nil {
 		return is.ls.Release(imageMeta.layer)
@@ -238,11 +238,11 @@ func (is *store) SetParent(id, parent ID) error {
 		delete(is.images[parent].children, id)
 	}
 	parentMeta.children[id] = struct{}{}
-	return is.fs.SetMetadata(id, "parent", []byte(parent))
+	return is.fs.SetMetadata(digest.Digest(id), "parent", []byte(parent))
 }
 
 func (is *store) GetParent(id ID) (ID, error) {
-	d, err := is.fs.GetMetadata(id, "parent")
+	d, err := is.fs.GetMetadata(digest.Digest(id), "parent")
 	if err != nil {
 		return "", err
 	}
