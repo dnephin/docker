@@ -1,8 +1,10 @@
 package daemon
 
 import (
+	"fmt"
 	"path"
 	"sort"
+	"time"
 
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/image/bundle"
@@ -173,4 +175,48 @@ func (daemon *Daemon) GetBundle(refOrID string) (*bundle.Bundle, error) {
 		return nil, err
 	}
 	return daemon.bundleStore.Get(imgID)
+}
+
+// LookupBundle looks up an Bundle by name and returns it as an BundleInspect
+// structure.
+func (daemon *Daemon) LookupBundle(name string) (*types.BundleInspect, error) {
+	bundle, err := daemon.GetBundle(name)
+	if err != nil {
+		return nil, fmt.Errorf("no such bundle: %s", name)
+	}
+
+	// todo(tonistiigi): separate to func
+	refs := daemon.bundleReferenceStore.References(digest.Digest(bundle.ID()))
+	repoTags := []string{}
+	repoDigests := []string{}
+	for _, ref := range refs {
+		switch ref.(type) {
+		case reference.NamedTagged:
+			repoTags = append(repoTags, ref.String())
+		case reference.Canonical:
+			repoDigests = append(repoDigests, ref.String())
+		}
+	}
+
+	bundleInspect := &types.BundleInspect{
+		ID:            bundle.ID().String(),
+		RepoTags:      repoTags,
+		RepoDigests:   repoDigests,
+		Created:       bundle.Created.Format(time.RFC3339Nano),
+		DockerVersion: bundle.DockerVersion,
+	}
+
+	for _, s := range bundle.Services {
+		img, err := daemon.LookupImage(string(s.Image))
+		if err != nil {
+			return nil, err
+		}
+		sInspect := &types.BundleService{
+			Name:  s.Name,
+			Image: img,
+		}
+		bundleInspect.Services = append(bundleInspect.Services, sInspect)
+	}
+
+	return bundleInspect, nil
 }

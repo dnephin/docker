@@ -519,11 +519,22 @@ type Runtime struct {
 }
 
 type BundleDelete struct{}
-type BundleInspect struct{}
+type BundleInspect struct {
+	ID            string `json:"Id"`
+	RepoTags      []string
+	RepoDigests   []string
+	Created       string
+	DockerVersion string
+	Services      []*BundleService
+}
 type Bundle struct {
 	ID          string `json:"Id"`
 	RepoTags    []string
 	RepoDigests []string
 	Created     int64
 	Labels      map[string]string
+}
+type BundleService struct { // POC
+	Image *ImageInspect
+	Name  string
 }
