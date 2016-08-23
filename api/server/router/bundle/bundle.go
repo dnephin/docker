@@ -1,19 +1,15 @@
 package bundle
 
-import (
-	"github.com/docker/docker/api/server/httputils"
-	"github.com/docker/docker/api/server/router"
-)
+import "github.com/docker/docker/api/server/router"
 
 // bundleRouter is a router to talk with the bundle controller
 type bundleRouter struct {
 	backend Backend
-	decoder httputils.ContainerDecoder
 	routes  []router.Route
 }
 
 // NewRouter initializes a new bundle router
-func NewRouter(backend Backend, decoder httputils.ContainerDecoder) router.Router {
+func NewRouter(backend Backend) router.Router {
 	r := &bundleRouter{
 		backend: backend,
 	}

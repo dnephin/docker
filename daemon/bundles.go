@@ -22,6 +22,7 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
+	"golang.org/x/net/context"
 )
 
 // CreateBundle(src, repository, tag string, inConfig io.ReadCloser, outStream io.Writer) error
@@ -362,9 +363,19 @@ func (daemon *Daemon) TagBundle(bundleName, repository, tag string) error {
 
 // TagBundleWithReference adds the given reference to the bundle ID provided.
 func (daemon *Daemon) TagBundleWithReference(bundleID bundle.ID, newTag reference.Named) error {
-	if err := daemon.referenceStore.AddTag(newTag, digest.Digest(bundleID), true); err != nil {
+	if err := daemon.bundleReferenceStore.AddTag(newTag, digest.Digest(bundleID), true); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (daemon *Daemon) PullBundle(ctx context.Context, bundle, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
+	return fmt.Errorf("not implemented")
+}
+func (daemon *Daemon) PushBundle(ctx context.Context, bundle, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
+	return fmt.Errorf("not implemented")
+}
+func (daemon *Daemon) BundleDelete(bundleRef string, force, prune bool) ([]types.BundleDelete, error) {
+	return nil, fmt.Errorf("not implemented")
 }

@@ -19,7 +19,6 @@ func (s *bundleRouter) postBundleCreate(ctx context.Context, w http.ResponseWrit
 	if err := httputils.ParseForm(r); err != nil {
 		return err
 	}
-
 	var (
 		bundle = r.Form.Get("fromBundle")
 		repo   = r.Form.Get("repo")
