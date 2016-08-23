@@ -1,8 +1,9 @@
-package image
+package bundle
 
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/image"
@@ -18,6 +19,13 @@ func (id ID) String() string {
 // Bundle stores the bundle configuration
 type Bundle struct {
 	Services []ServiceSpec
+
+	// Created timestamp when image was created
+	Created time.Time `json:"created"`
+	// DockerVersion specifies version on which image is built
+	DockerVersion string `json:"docker_version,omitempty"`
+	// Labels is a list of labels set to this bundle
+	Labels map[string]string
 
 	// rawJSON caches the immutable JSON associated with this image.
 	rawJSON    []byte

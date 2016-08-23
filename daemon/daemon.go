@@ -34,7 +34,7 @@ import (
 	dmetadata "github.com/docker/docker/distribution/metadata"
 	"github.com/docker/docker/distribution/xfer"
 	"github.com/docker/docker/image"
-	_ "github.com/docker/docker/image/bundle"
+	"github.com/docker/docker/image/bundle"
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/libcontainerd"
 	"github.com/docker/docker/migrate/v1"
@@ -75,6 +75,7 @@ type Daemon struct {
 	containers                container.Store
 	execCommands              *exec.Store
 	referenceStore            reference.Store
+	bundleReferenceStore      reference.Store
 	downloadManager           *xfer.LayerDownloadManager
 	uploadManager             *xfer.LayerUploadManager
 	distributionMetadataStore dmetadata.Store
@@ -95,6 +96,7 @@ type Daemon struct {
 	gidMaps                   []idtools.IDMap
 	layerStore                layer.Store
 	imageStore                image.Store
+	bundleStore               bundle.Store
 	nameIndex                 *registrar.Registrar
 	linkIndex                 *linkIndex
 	containerd                libcontainerd.Client

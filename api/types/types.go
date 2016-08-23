@@ -520,4 +520,10 @@ type Runtime struct {
 
 type BundleDelete struct{}
 type BundleInspect struct{}
-type Bundle struct{}
+type Bundle struct {
+	ID          string `json:"Id"`
+	RepoTags    []string
+	RepoDigests []string
+	Created     int64
+	Labels      map[string]string
+}

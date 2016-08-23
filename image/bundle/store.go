@@ -1,4 +1,4 @@
-package image
+package bundle
 
 import (
 	"fmt"
