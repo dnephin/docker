@@ -517,3 +517,7 @@ type Runtime struct {
 	Path string   `json:"path"`
 	Args []string `json:"runtimeArgs,omitempty"`
 }
+
+type BundleDelete struct{}
+type BundleInspect struct{}
+type Bundle struct{}
