@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/docker/distribution/digest"
+	"github.com/docker/docker/distribution"
 	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/image/bundle"
 	"github.com/docker/docker/pkg/archive"
@@ -373,8 +374,51 @@ func (daemon *Daemon) TagBundleWithReference(bundleID bundle.ID, newTag referenc
 func (daemon *Daemon) PullBundle(ctx context.Context, bundle, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
 	return fmt.Errorf("not implemented")
 }
-func (daemon *Daemon) PushBundle(ctx context.Context, bundle, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
-	return fmt.Errorf("not implemented")
+func (daemon *Daemon) PushBundle(ctx context.Context, repo, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
+	ref, err := reference.ParseNamed(repo)
+	if err != nil {
+		return err
+	}
+	if tag != "" {
+		// Push by digest is not supported, so only tags are supported.
+		ref, err = reference.WithTag(ref, tag)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Include a buffer so that slow client connections don't affect
+	// transfer performance.
+	progressChan := make(chan progress.Progress, 100)
+
+	writesDone := make(chan struct{})
+
+	ctx, cancelFunc := context.WithCancel(ctx)
+
+	go func() {
+		writeDistributionProgress(cancelFunc, outStream, progressChan)
+		close(writesDone)
+	}()
+
+	pushConfig := &distribution.PushConfig{
+		MetaHeaders:      metaHeaders,
+		AuthConfig:       authConfig,
+		ProgressOutput:   progress.ChanOutput(progressChan),
+		RegistryService:  daemon.RegistryService,
+		ImageEventLogger: daemon.LogImageEvent,
+		MetadataStore:    daemon.distributionMetadataStore,
+		LayerStore:       daemon.layerStore,
+		ImageStore:       daemon.imageStore,
+		ReferenceStore:   daemon.bundleReferenceStore,
+		TrustKey:         daemon.trustKey,
+		UploadManager:    daemon.uploadManager,
+		BundleStore:      daemon.bundleStore,
+	}
+
+	err = distribution.Push(ctx, ref, pushConfig)
+	close(progressChan)
+	<-writesDone
+	return err
 }
 func (daemon *Daemon) BundleDelete(bundleRef string, force, prune bool) ([]types.BundleDelete, error) {
 	return nil, fmt.Errorf("not implemented")
