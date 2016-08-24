@@ -66,7 +66,7 @@ func (daemon *Daemon) ImageDelete(imageRef string, force, prune bool) ([]types.I
 
 	imgID, err := daemon.GetImageID(imageRef)
 	if err != nil {
-		return nil, daemon.imageNotExistToErrcode(err)
+		return nil, daemon.refNotExistToErrcode("image", err)
 	}
 
 	repoRefs := daemon.referenceStore.References(digest.Digest(imgID))

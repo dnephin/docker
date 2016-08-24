@@ -421,5 +421,21 @@ func (daemon *Daemon) PushBundle(ctx context.Context, repo, tag string, metaHead
 	return err
 }
 func (daemon *Daemon) BundleDelete(bundleRef string, force, prune bool) ([]types.BundleDelete, error) {
-	return nil, fmt.Errorf("not implemented")
+	// This is WIP, always delete, no reference checking, no image delete
+
+	bundleID, err := daemon.GetBundleID(bundleRef)
+	if err != nil {
+		return nil, daemon.refNotExistToErrcode("bundle", err)
+	}
+
+	repoRefs := daemon.bundleReferenceStore.References(digest.Digest(bundleID))
+
+	for _, r := range repoRefs {
+		if _, err := daemon.bundleReferenceStore.Delete(r); err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = daemon.bundleStore.Delete(bundleID)
+	return nil, err
 }
