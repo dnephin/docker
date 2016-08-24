@@ -31,7 +31,7 @@ import (
 type v1Puller struct {
 	v1IDService *metadata.V1IDService
 	endpoint    registry.APIEndpoint
-	config      *ImagePullConfig
+	config      *PullConfig
 	repoInfo    *registry.RepositoryInfo
 	session     *registry.Session
 }

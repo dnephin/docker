@@ -371,9 +371,6 @@ func (daemon *Daemon) TagBundleWithReference(bundleID bundle.ID, newTag referenc
 	return nil
 }
 
-func (daemon *Daemon) PullBundle(ctx context.Context, bundle, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
-	return fmt.Errorf("not implemented")
-}
 func (daemon *Daemon) PushBundle(ctx context.Context, repo, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
 	ref, err := reference.ParseNamed(repo)
 	if err != nil {
@@ -438,4 +435,58 @@ func (daemon *Daemon) BundleDelete(bundleRef string, force, prune bool) ([]types
 
 	_, err = daemon.bundleStore.Delete(bundleID)
 	return nil, err
+}
+
+// PullBundle initiates a pull operation. bundle is the repository name to pull, and
+// tag may be either empty, or indicate a specific tag to pull.
+func (daemon *Daemon) PullBundle(ctx context.Context, bundle, tag string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) error {
+	ref, err := reference.ParseNamed(bundle)
+	if err != nil {
+		return err
+	}
+
+	if tag != "" {
+		// The "tag" could actually be a digest.
+		var dgst digest.Digest
+		dgst, err = digest.ParseDigest(tag)
+		if err == nil {
+			ref, err = reference.WithDigest(ref, dgst)
+		} else {
+			ref, err = reference.WithTag(ref, tag)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	// Include a buffer so that slow client connections don't affect
+	// transfer performance.
+	progressChan := make(chan progress.Progress, 100)
+
+	writesDone := make(chan struct{})
+
+	ctx, cancelFunc := context.WithCancel(ctx)
+
+	go func() {
+		writeDistributionProgress(cancelFunc, outStream, progressChan)
+		close(writesDone)
+	}()
+
+	pullConfig := &distribution.PullConfig{
+		MetaHeaders:      metaHeaders,
+		AuthConfig:       authConfig,
+		ProgressOutput:   progress.ChanOutput(progressChan),
+		RegistryService:  daemon.RegistryService,
+		ImageEventLogger: daemon.LogImageEvent,
+		MetadataStore:    daemon.distributionMetadataStore,
+		ImageStore:       daemon.imageStore,
+		BundleStore:      daemon.bundleStore,
+		ReferenceStore:   daemon.bundleReferenceStore,
+		DownloadManager:  daemon.downloadManager,
+	}
+
+	err = distribution.Pull(ctx, ref, pullConfig)
+	close(progressChan)
+	<-writesDone
+	return err
 }
