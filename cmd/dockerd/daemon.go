@@ -20,6 +20,7 @@ import (
 	"github.com/docker/docker/api/server/router/container"
 	"github.com/docker/docker/api/server/router/image"
 	"github.com/docker/docker/api/server/router/network"
+	"github.com/docker/docker/api/server/router/stack"
 	swarmrouter "github.com/docker/docker/api/server/router/swarm"
 	systemrouter "github.com/docker/docker/api/server/router/system"
 	"github.com/docker/docker/api/server/router/volume"
@@ -417,6 +418,7 @@ func initRouter(s *apiserver.Server, d *daemon.Daemon, c *cluster.Cluster) {
 		build.NewRouter(dockerfile.NewBuildManager(d)),
 		swarmrouter.NewRouter(c),
 		bundle.NewRouter(d),
+		stack.NewRouter(c),
 	}...)
 
 	if d.NetworkControllerEnabled() {

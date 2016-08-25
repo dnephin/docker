@@ -13,16 +13,17 @@ import (
 	"time"
 
 	"github.com/docker/distribution/digest"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/distribution"
 	"github.com/docker/docker/dockerversion"
+	"github.com/docker/docker/image"
 	"github.com/docker/docker/image/bundle"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/httputils"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/pkg/streamformatter"
 	"github.com/docker/docker/reference"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
 	"golang.org/x/net/context"
 )
 
@@ -489,4 +490,12 @@ func (daemon *Daemon) PullBundle(ctx context.Context, bundle, tag string, metaHe
 	close(progressChan)
 	<-writesDone
 	return err
+}
+
+func (daemon *Daemon) ResolveBundleManifest(bundleRef string) (*bundle.Bundle, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (daemon *Daemon) PullBundleImage(bundleRef, selector string) (image.ID, error) {
+	return "", fmt.Errorf("not implemented")
 }

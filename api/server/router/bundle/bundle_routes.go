@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/server/httputils"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/streamformatter"
-	"github.com/docker/engine-api/types"
 	"golang.org/x/net/context"
 )
 

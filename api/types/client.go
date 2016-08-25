@@ -310,3 +310,12 @@ type BundleRemoveOptions struct {
 	PruneChildren bool
 }
 
+// BundlePullOptions holds information to pull bundles.
+type BundlePullOptions struct {
+	// RegistryAuth is the base64 encoded credentials for the registry
+	RegistryAuth  string
+	PrivilegeFunc RequestPrivilegeFunc
+}
+
+//ImagePushOptions holds information to push bundles.
+type BundlePushOptions BundlePullOptions
