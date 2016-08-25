@@ -298,3 +298,15 @@ type TaskListOptions struct {
 type PluginRemoveOptions struct {
 	Force bool
 }
+
+// BundleListOptions holds parameters to list bundles.
+type BundleListOptions struct {
+	Filter filters.Args
+}
+
+// BundleRemoveOptions holds parameters to remove images.
+type BundleRemoveOptions struct {
+	Force         bool
+	PruneChildren bool
+}
+

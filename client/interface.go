@@ -18,6 +18,7 @@ type CommonAPIClient interface {
 	ContainerAPIClient
 	ImageAPIClient
 	NodeAPIClient
+	BundleAPIClient
 	NetworkAPIClient
 	ServiceAPIClient
 	SwarmAPIClient
@@ -77,6 +78,12 @@ type ImageAPIClient interface {
 	ImageSearch(ctx context.Context, term string, options types.ImageSearchOptions) ([]registry.SearchResult, error)
 	ImageSave(ctx context.Context, images []string) (io.ReadCloser, error)
 	ImageTag(ctx context.Context, image, ref string) error
+}
+
+// BundleAPIClient defines API client methods for bundles
+type BundleAPIClient interface {
+	BundleList(ctx context.Context, options types.BundleListOptions) ([]types.Bundle, error)
+	BundleRemove(ctx context.Context, bundleID string, options types.BundleRemoveOptions) ([]types.BundleDelete, error)
 }
 
 // NetworkAPIClient defines API client methods for the networks

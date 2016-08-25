@@ -518,7 +518,12 @@ type Runtime struct {
 	Args []string `json:"runtimeArgs,omitempty"`
 }
 
-type BundleDelete struct{}
+// BundleDelete is the API response for deleting a bundle
+type BundleDelete struct {
+	Untagged string `json:",omitempty"`
+	Deleted  string `json:",omitempty"`
+}
+
 type BundleInspect struct {
 	ID            string `json:"Id"`
 	RepoTags      []string
