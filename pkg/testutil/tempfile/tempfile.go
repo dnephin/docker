@@ -31,6 +31,30 @@ func (f *TempFile) Name() string {
 }
 
 // Remove removes the file
-func (f *TempFile) Remove() {
-	os.Remove(f.Name())
+func (f *TempFile) Remove() error {
+	return os.Remove(f.Name())
+}
+
+// TempDir is a temporary directory that can be used with unit tests, and
+// removed at the end of the test case.
+type TempDir struct {
+	path string
+}
+
+// NewTempDir returns a new temp directory for use with unit tests
+func NewTempDir(t assert.TestingT, prefix string) *TempDir {
+	name, err := ioutil.TempDir("", prefix)
+	assert.NilError(t, err)
+
+	return &TempDir{path: name}
+}
+
+// Path returns the path to the directory
+func (t *TempDir) Path() string {
+	return t.path
+}
+
+// Remove the temporary directory
+func (t *TempDir) Remove() error {
+	return os.RemoveAll(t.path)
 }
