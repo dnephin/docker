@@ -11,7 +11,6 @@ import (
 	"github.com/docker/docker/distribution/metadata"
 	"github.com/docker/docker/distribution/xfer"
 	"github.com/docker/docker/image"
-	"github.com/docker/docker/image/bundle"
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/reference"
@@ -45,7 +44,7 @@ type PushConfig struct {
 	// ImageStore manages images.
 	ImageStore image.Store
 	// BundleStore manages bundles.
-	BundleStore bundle.Store
+	BundleStore bundleCreateGetter
 	// ReferenceStore manages tags.
 	ReferenceStore reference.Store
 	// TrustKey is the private key for legacy signatures. This is typically

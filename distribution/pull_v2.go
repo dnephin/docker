@@ -534,6 +534,10 @@ func (p *v2Puller) pullBundleSchema2(ctx context.Context, ref reference.Named, m
 	}
 
 	for i, s := range b.Services {
+		if p.config.BundleImageSelector != nil && !p.config.BundleImageSelector(s.Name) {
+			continue
+		}
+
 		imgID, err := digest.ParseDigest(string(s.Image))
 		if err != nil {
 			return "", "", err

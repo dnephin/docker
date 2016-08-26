@@ -16,12 +16,12 @@ func (s *stackRouter) postStackCreate(ctx context.Context, w http.ResponseWriter
 	bundle := r.Form.Get("bundle")
 	name := r.Form.Get("name")
 
-	id, err := s.backend.CreateStack(name, bundle)
+	resp, err := s.backend.CreateStack(name, bundle)
 	if err != nil {
 		return err
 	}
 
-	return httputils.WriteJSON(w, http.StatusCreated, id)
+	return httputils.WriteJSON(w, http.StatusCreated, resp)
 }
 
 func (s *stackRouter) deleteStacks(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {

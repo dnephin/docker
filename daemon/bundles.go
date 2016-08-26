@@ -12,6 +12,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -493,9 +494,58 @@ func (daemon *Daemon) PullBundle(ctx context.Context, bundle, tag string, metaHe
 }
 
 func (daemon *Daemon) ResolveBundleManifest(bundleRef string) (*bundle.Bundle, error) {
-	return nil, fmt.Errorf("not implemented")
+	ref, err := reference.ParseNamed(bundleRef)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: meta, auth
+	metaHeaders := make(map[string][]string)
+	authConfig := &types.AuthConfig{}
+
+	bundleConfig := &bundleConfigPuller{}
+
+	pullConfig := &distribution.PullConfig{
+		MetaHeaders:         metaHeaders,
+		AuthConfig:          authConfig,
+		ProgressOutput:      progress.Discard,
+		RegistryService:     daemon.RegistryService,
+		ImageEventLogger:    daemon.LogImageEvent,
+		MetadataStore:       daemon.distributionMetadataStore,
+		ImageStore:          daemon.imageStore,
+		BundleStore:         bundleConfig,
+		ReferenceStore:      daemon.bundleReferenceStore,
+		DownloadManager:     daemon.downloadManager,
+		BundleImageSelector: func(string) bool { return false },
+	}
+
+	err = distribution.Pull(context.Background(), ref, pullConfig)
+	if err != bundleConfigStopPull {
+		dgst, err := daemon.bundleReferenceStore.Get(ref)
+		logrus.Debugf("ref: %v %v", dgst, err)
+		if err != nil {
+			return nil, err
+		}
+		return daemon.bundleStore.Get(bundle.ID(dgst))
+	}
+
+	return bundle.NewFromJSON(bundleConfig.config)
 }
 
 func (daemon *Daemon) PullBundleImage(bundleRef, selector string) (image.ID, error) {
 	return "", fmt.Errorf("not implemented")
+}
+
+var bundleConfigStopPull = errors.New("")
+
+type bundleConfigPuller struct {
+	config []byte
+}
+
+func (b *bundleConfigPuller) Create(config []byte) (bundle.ID, error) {
+	b.config = config
+	return "", bundleConfigStopPull
+}
+func (b *bundleConfigPuller) Get(id bundle.ID) (*bundle.Bundle, error) {
+	return nil, fmt.Errorf("not found")
 }

@@ -17,6 +17,11 @@ import (
 	"golang.org/x/net/context"
 )
 
+type bundleCreateGetter interface {
+	Create(config []byte) (bundle.ID, error)
+	Get(id bundle.ID) (*bundle.Bundle, error)
+}
+
 // PullConfig stores pull configuration.
 type PullConfig struct {
 	// MetaHeaders stores HTTP headers with metadata about the image
@@ -38,11 +43,13 @@ type PullConfig struct {
 	// ImageStore manages images.
 	ImageStore image.Store
 	// BundleStore manages images.
-	BundleStore bundle.Store
+	BundleStore bundleCreateGetter
 	// ReferenceStore manages tags.
 	ReferenceStore reference.Store
 	// DownloadManager manages concurrent pulls.
 	DownloadManager *xfer.LayerDownloadManager
+	// BundleImageSelector optional function to filter images to pull as part of the bundle
+	BundleImageSelector func(string) bool
 
 	requireSchema2 bool
 }
