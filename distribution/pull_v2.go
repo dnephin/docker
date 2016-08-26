@@ -534,7 +534,7 @@ func (p *v2Puller) pullBundleSchema2(ctx context.Context, ref reference.Named, m
 	}
 
 	for i, s := range b.Services {
-		if p.config.BundleImageSelector != nil && !p.config.BundleImageSelector(s.Name) {
+		if p.config.BundleImageSelector != nil && !p.config.BundleImageSelector.Select(s.Name) {
 			continue
 		}
 
@@ -575,6 +575,12 @@ func (p *v2Puller) pullSchema2(ctx context.Context, ref reference.Named, mfst *s
 	if mfst.Config.MediaType == schema2.MediaTypeBundleConfig {
 		return p.pullBundleSchema2(ctx, ref, mfst)
 	}
+
+	defer func() {
+		if err == nil && p.config.BundleImageSelector != nil {
+			p.config.BundleImageSelector.Pulled(image.ID(id))
+		}
+	}()
 
 	manifestDigest, err = schema2ManifestDigest(ref, mfst)
 	if err != nil {

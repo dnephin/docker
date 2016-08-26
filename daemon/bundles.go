@@ -12,7 +12,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -503,7 +502,7 @@ func (daemon *Daemon) ResolveBundleManifest(bundleRef string) (*bundle.Bundle, e
 	metaHeaders := make(map[string][]string)
 	authConfig := &types.AuthConfig{}
 
-	bundleConfig := &bundleConfigPuller{}
+	selector := &bundleImageSelector{}
 
 	pullConfig := &distribution.PullConfig{
 		MetaHeaders:         metaHeaders,
@@ -513,39 +512,106 @@ func (daemon *Daemon) ResolveBundleManifest(bundleRef string) (*bundle.Bundle, e
 		ImageEventLogger:    daemon.LogImageEvent,
 		MetadataStore:       daemon.distributionMetadataStore,
 		ImageStore:          daemon.imageStore,
-		BundleStore:         bundleConfig,
+		BundleStore:         selector,
 		ReferenceStore:      daemon.bundleReferenceStore,
 		DownloadManager:     daemon.downloadManager,
-		BundleImageSelector: func(string) bool { return false },
+		BundleImageSelector: selector,
 	}
 
 	err = distribution.Pull(context.Background(), ref, pullConfig)
 	if err != bundleConfigStopPull {
 		dgst, err := daemon.bundleReferenceStore.Get(ref)
-		logrus.Debugf("ref: %v %v", dgst, err)
 		if err != nil {
 			return nil, err
 		}
 		return daemon.bundleStore.Get(bundle.ID(dgst))
 	}
 
-	return bundle.NewFromJSON(bundleConfig.config)
+	return bundle.NewFromJSON(selector.config)
 }
 
-func (daemon *Daemon) PullBundleImage(bundleRef, selector string) (image.ID, error) {
-	return "", fmt.Errorf("not implemented")
+func (daemon *Daemon) PullBundleImage(ctx context.Context, bundleRef, imageName string, metaHeaders map[string][]string, authConfig *types.AuthConfig, outStream io.Writer) (image.ID, error) {
+	ref, err := reference.ParseNamed(bundleRef)
+	if err != nil {
+		return "", err
+	}
+
+	selector := &bundleImageSelector{
+		name: imageName,
+	}
+
+	// Include a buffer so that slow client connections don't affect
+	// transfer performance.
+	progressChan := make(chan progress.Progress, 100)
+
+	writesDone := make(chan struct{})
+
+	ctx, cancelFunc := context.WithCancel(ctx)
+
+	go func() {
+		writeDistributionProgress(cancelFunc, outStream, progressChan)
+		close(writesDone)
+	}()
+
+	pullConfig := &distribution.PullConfig{
+		MetaHeaders:         metaHeaders,
+		AuthConfig:          authConfig,
+		ProgressOutput:      progress.ChanOutput(progressChan),
+		RegistryService:     daemon.RegistryService,
+		ImageEventLogger:    daemon.LogImageEvent,
+		MetadataStore:       daemon.distributionMetadataStore,
+		ImageStore:          daemon.imageStore,
+		BundleStore:         selector,
+		ReferenceStore:      daemon.bundleReferenceStore,
+		DownloadManager:     daemon.downloadManager,
+		BundleImageSelector: selector,
+	}
+
+	err = distribution.Pull(ctx, ref, pullConfig)
+	close(progressChan)
+	<-writesDone
+	if err != bundleConfigStopPull {
+		if ctx.Err() != nil {
+			return "", err
+		}
+		dgst, err := daemon.bundleReferenceStore.Get(ref)
+		if err != nil {
+			return "", err
+		}
+		bundle, err := daemon.bundleStore.Get(bundle.ID(dgst))
+		if err != nil {
+			return "", err
+		}
+		for _, s := range bundle.Services {
+			if s.Name == imageName {
+				return s.Image, nil
+			}
+		}
+	}
+	if len(selector.pulled) != 1 {
+		return "", fmt.Errorf("invalid number of images pulled: %v", selector.pulled)
+	}
+	return selector.pulled[0], nil
 }
 
 var bundleConfigStopPull = errors.New("")
 
-type bundleConfigPuller struct {
+type bundleImageSelector struct {
 	config []byte
+	name   string
+	pulled []image.ID
 }
 
-func (b *bundleConfigPuller) Create(config []byte) (bundle.ID, error) {
+func (b *bundleImageSelector) Create(config []byte) (bundle.ID, error) {
 	b.config = config
 	return "", bundleConfigStopPull
 }
-func (b *bundleConfigPuller) Get(id bundle.ID) (*bundle.Bundle, error) {
+func (b *bundleImageSelector) Get(id bundle.ID) (*bundle.Bundle, error) {
 	return nil, fmt.Errorf("not found")
+}
+func (b *bundleImageSelector) Select(name string) bool {
+	return b.name != "" && name == b.name
+}
+func (b *bundleImageSelector) Pulled(id image.ID) {
+	b.pulled = append(b.pulled, id)
 }

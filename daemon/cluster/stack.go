@@ -43,7 +43,7 @@ func (c *Cluster) CreateStack(name, bundleRef string) (*types.StackCreateRespons
 			},
 			TaskTemplate: types.TaskSpec{
 				ContainerSpec: types.ContainerSpec{
-					Image:   string(s.Image), // TODO: wrong
+					Image:   s.Name,
 					Labels:  s.Labels,
 					Command: s.Command,
 					Args:    s.Args,
@@ -59,6 +59,12 @@ func (c *Cluster) CreateStack(name, bundleRef string) (*types.StackCreateRespons
 		if err != nil {
 			return nil, err
 		}
+
+		ctnr := serviceSpec.Task.GetContainer()
+		if ctnr == nil {
+			return nil, fmt.Errorf("service does not use container tasks")
+		}
+		ctnr.Bundle = bundleRef
 
 		ctx, cancel := c.getRequestContext()
 		defer cancel()
