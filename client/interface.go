@@ -84,6 +84,7 @@ type ImageAPIClient interface {
 type BundleAPIClient interface {
 	BundleList(ctx context.Context, options types.BundleListOptions) ([]types.Bundle, error)
 	BundleRemove(ctx context.Context, bundleID string, options types.BundleRemoveOptions) ([]types.BundleDelete, error)
+	BundlePush(ctx context.Context, ref string, options types.BundlePushOptions) (io.ReadCloser, error)
 }
 
 // NetworkAPIClient defines API client methods for the networks
