@@ -26,8 +26,8 @@ func (r *bundleRouter) Routes() []router.Route {
 func (r *bundleRouter) initRoutes() {
 	r.routes = []router.Route{
 		// GET
-		router.NewGetRoute("/bundles/json", r.getBundlesJSON),
-		router.NewGetRoute("/bundles/{name:.*}/json", r.getBundlesByName),
+		router.NewGetRoute("/bundles", r.getBundlesJSON),
+		router.NewGetRoute("/bundles/{name:.*}", r.getBundlesByName),
 		// POST
 		router.Cancellable(router.NewPostRoute("/bundles/create", r.postBundleCreate)),
 		router.Cancellable(router.NewPostRoute("/bundles/{name:.*}/push", r.postBundlesPush)),

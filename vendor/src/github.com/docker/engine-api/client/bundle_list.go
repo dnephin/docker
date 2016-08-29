@@ -21,7 +21,7 @@ func (cli *Client) BundleList(ctx context.Context, options types.BundleListOptio
 		query.Set("filters", filterJSON)
 	}
 
-	serverResp, err := cli.get(ctx, "/bundles/json", query, nil)
+	serverResp, err := cli.get(ctx, "/bundles", query, nil)
 	if err != nil {
 		return nil, err
 	}
