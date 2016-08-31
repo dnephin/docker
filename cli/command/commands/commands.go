@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/docker/docker/cli/command"
+	"github.com/docker/docker/cli/command/bundle"
 	"github.com/docker/docker/cli/command/checkpoint"
 	"github.com/docker/docker/cli/command/container"
 	"github.com/docker/docker/cli/command/image"
@@ -66,6 +67,7 @@ func AddCommands(cmd *cobra.Command, dockerCli *command.DockerCli) {
 		registry.NewLogoutCommand(dockerCli),
 		system.NewVersionCommand(dockerCli),
 		volume.NewVolumeCommand(dockerCli),
+		bundle.NewBundleCommand(dockerCli),
 		system.NewInfoCommand(dockerCli),
 	)
 	checkpoint.NewCheckpointCommand(cmd, dockerCli)
