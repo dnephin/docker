@@ -21,10 +21,11 @@ func NewBundleCommand(dockerCli *client.DockerCli) *cobra.Command {
 		},
 	}
 	cmd.AddCommand(
+		newInspectCommand(dockerCli),
 		newListCommand(dockerCli),
-		newRemoveCommand(dockerCli),
-		newPushCommand(dockerCli),
 		newPullCommand(dockerCli),
+		newPushCommand(dockerCli),
+		newRemoveCommand(dockerCli),
 		newTagCommand(dockerCli),
 	)
 	return cmd

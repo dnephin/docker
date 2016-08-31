@@ -3,10 +3,20 @@
 package bundle
 
 import (
+	"fmt"
+	"io"
+	"text/tabwriter"
+	"time"
+
 	"github.com/docker/docker/api/client"
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/opts"
+	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/reference"
+	"github.com/docker/engine-api/types"
+	units "github.com/docker/go-units"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 type listOptions struct {
@@ -35,29 +45,91 @@ func newListCommand(dockerCli *client.DockerCli) *cobra.Command {
 }
 
 func runList(dockerCli *client.DockerCli, opts listOptions) error {
-	//	ctx := context.Background()
-	//	client := dockerCli.Client()
-	//
-	//	bundles, err := client.BundleList(ctx, ...)
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	out := dockerCli.Out()
-	//	if opts.quiet {
-	//		PrintQuiet(out, bundles)
-	//	} else {
-	//		taskFilter := filters.NewArgs()
-	//		for _, service := range services {
-	//			taskFilter.Add("service", service.ID)
-	//		}
-	//		PrintNotQuiet(out, services, nodes, tasks)
-	//	}
+	ctx := context.Background()
+	client := dockerCli.Client()
+
+	bundles, err := client.BundleList(ctx, types.BundleListOptions{
+		Filter: opts.filter.Value(),
+	})
+	if err != nil {
+		return err
+	}
+
+	out := dockerCli.Out()
+	if opts.quiet {
+		printQuiet(out, bundles)
+	} else {
+		printTable(out, bundles)
+	}
 	return nil
 }
 
-//func printQuiet(out io.Writer, bundles []types.Bundles) {
-//	for _, service := range services {
-//		fmt.Fprintln(out, service.ID)
-//	}
-//}
+const listItemFmt = "%s\t%s\t%s\t%s\n"
+
+func printTable(out io.Writer, bundles []types.Bundle) {
+	writer := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
+
+	// Ignore flushing errors
+	defer writer.Flush()
+
+	fmt.Fprintf(writer, listItemFmt, "REPOSITORY", "TAG", "BUNDLE ID", "CREATED")
+	for _, bundle := range bundles {
+		for _, repoTag := range bundleTags(bundle) {
+			fmt.Fprintf(
+				writer,
+				listItemFmt,
+				repoTag.repo,
+				repoTag.tag,
+				stringid.TruncateID(bundle.ID),
+				createdSince(bundle.Created),
+			)
+		}
+	}
+}
+
+type repoTag struct {
+	repo string
+	tag  string
+}
+
+// FIXME: this doesn't quite match `image list`
+func bundleTags(bundle types.Bundle) []repoTag {
+	tags := []repoTag{}
+
+	for _, refString := range bundle.RepoTags {
+		ref, err := reference.ParseNamed(refString)
+		if err != nil {
+			continue
+		}
+		if namedtag, ok := ref.(reference.NamedTagged); ok {
+			tags = append(tags, repoTag{ref.Name(), namedtag.Tag()})
+		}
+	}
+	if len(tags) > 0 {
+		return tags
+	}
+
+	for _, refString := range bundle.RepoDigests {
+		ref, err := reference.ParseNamed(refString)
+		if err != nil {
+			continue
+		}
+		if c, ok := ref.(reference.Canonical); ok {
+			tags = append(tags, repoTag{ref.Name(), c.Digest().String()})
+		}
+	}
+	if len(tags) == 0 {
+		return []repoTag{{"<none>", "<none>"}}
+	}
+	return tags
+}
+
+func createdSince(created int64) string {
+	return units.HumanDuration(time.Now().UTC().Sub(time.Unix(created, 0)))
+}
+
+func printQuiet(out io.Writer, bundles []types.Bundle) {
+	for _, bundle := range bundles {
+		fmt.Fprintln(out, bundle.ID)
+	}
+}
