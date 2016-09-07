@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 
 	distreference "github.com/docker/distribution/reference"
-	"github.com/docker/engine-api/types/reference"
+	"github.com/docker/docker/api/types/reference"
 )
 
 // BundleTag tags a bundle in the docker host

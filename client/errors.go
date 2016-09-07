@@ -221,4 +221,3 @@ func (e bundleNotFoundError) NotFound() bool {
 func (e bundleNotFoundError) Error() string {
 	return fmt.Sprintf("Error: No such bundle: %s", e.bundleID)
 }
-

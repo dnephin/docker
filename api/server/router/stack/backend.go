@@ -1,6 +1,6 @@
 package stack
 
-import types "github.com/docker/engine-api/types/swarm"
+import types "github.com/docker/docker/api/types/swarm"
 
 // Backend is all the methods that need to be implemented
 // to provide stack specific functionality.
