@@ -7,9 +7,10 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/docker/docker/api/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli"
+	"github.com/docker/docker/cli/command"
+	"github.com/docker/docker/cli/command/image"
 	apiclient "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/reference"
@@ -18,7 +19,7 @@ import (
 )
 
 // NewPushCommand creates a new `docker bundle push` command
-func newPushCommand(dockerCli *client.DockerCli) *cobra.Command {
+func newPushCommand(dockerCli *command.DockerCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "push [OPTIONS] NAME[:TAG]",
 		Short: "Push a bundle to a registry",
@@ -29,12 +30,12 @@ func newPushCommand(dockerCli *client.DockerCli) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	client.AddTrustedFlags(flags, true)
+	command.AddTrustedFlags(flags, true)
 
 	return cmd
 }
 
-func runPush(dockerCli *client.DockerCli, remote string) error {
+func runPush(dockerCli *command.DockerCli, remote string) error {
 	ref, err := reference.ParseNamed(remote)
 	if err != nil {
 		return err
@@ -49,11 +50,11 @@ func runPush(dockerCli *client.DockerCli, remote string) error {
 	ctx := context.Background()
 
 	// Resolve the Auth config relevant for this server
-	authConfig := dockerCli.ResolveAuthConfig(ctx, repoInfo.Index)
-	requestPrivilege := dockerCli.RegistryAuthenticationPrivilegedFunc(repoInfo.Index, "push")
+	authConfig := command.ResolveAuthConfig(ctx, dockerCli, repoInfo.Index)
+	requestPrivilege := command.RegistryAuthenticationPrivilegedFunc(dockerCli, repoInfo.Index, "push")
 
-	if client.IsTrusted() {
-		return dockerCli.TrustedPush(ctx, repoInfo, ref, authConfig, requestPrivilege)
+	if command.IsTrusted() {
+		return image.TrustedPush(ctx, dockerCli, repoInfo, ref, authConfig, requestPrivilege)
 	}
 
 	responseBody, err := bundlePushPrivileged(ctx, dockerCli.Client(), authConfig, ref.String(), requestPrivilege)
@@ -62,11 +63,11 @@ func runPush(dockerCli *client.DockerCli, remote string) error {
 	}
 	defer responseBody.Close()
 
-	return jsonmessage.DisplayJSONMessagesStream(responseBody, dockerCli.Out(), dockerCli.OutFd(), dockerCli.IsTerminalOut(), nil)
+	return jsonmessage.DisplayJSONMessagesToStream(responseBody, dockerCli.Out(), nil)
 }
 
 func bundlePushPrivileged(ctx context.Context, apiclient apiclient.APIClient, authConfig types.AuthConfig, ref string, requestPrivilege types.RequestPrivilegeFunc) (io.ReadCloser, error) {
-	encodedAuth, err := client.EncodeAuthToBase64(authConfig)
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
 	if err != nil {
 		return nil, err
 	}

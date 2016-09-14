@@ -7,9 +7,10 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/docker/docker/api/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli"
+	"github.com/docker/docker/cli/command"
+	"github.com/docker/docker/cli/command/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
@@ -21,7 +22,7 @@ type pullOptions struct {
 }
 
 // newPullCommand creates a new `docker bundle pull` command
-func newPullCommand(dockerCli *client.DockerCli) *cobra.Command {
+func newPullCommand(dockerCli *command.DockerCli) *cobra.Command {
 	var opts pullOptions
 
 	cmd := &cobra.Command{
@@ -35,11 +36,11 @@ func newPullCommand(dockerCli *client.DockerCli) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	client.AddTrustedFlags(flags, true)
+	command.AddTrustedFlags(flags, true)
 	return cmd
 }
 
-func runPull(dockerCli *client.DockerCli, opts pullOptions) error {
+func runPull(dockerCli *command.DockerCli, opts pullOptions) error {
 	distributionRef, err := reference.ParseNamed(opts.remote)
 	if err != nil {
 		return err
@@ -68,12 +69,12 @@ func runPull(dockerCli *client.DockerCli, opts pullOptions) error {
 
 	ctx := context.Background()
 
-	authConfig := dockerCli.ResolveAuthConfig(ctx, repoInfo.Index)
-	requestPrivilege := dockerCli.RegistryAuthenticationPrivilegedFunc(repoInfo.Index, "pull")
+	authConfig := command.ResolveAuthConfig(ctx, dockerCli, repoInfo.Index)
+	requestPrivilege := command.RegistryAuthenticationPrivilegedFunc(dockerCli, repoInfo.Index, "pull")
 
-	if client.IsTrusted() && !registryRef.HasDigest() {
+	if command.IsTrusted() && !registryRef.HasDigest() {
 		// Check if tag is digest
-		err = dockerCli.TrustedPull(ctx, repoInfo, registryRef, authConfig, requestPrivilege)
+		err = image.TrustedPull(ctx, dockerCli, repoInfo, registryRef, authConfig, requestPrivilege)
 	} else {
 		err = bundlePullPrivileged(ctx, dockerCli, authConfig, distributionRef.String(), requestPrivilege)
 	}
@@ -87,9 +88,9 @@ func runPull(dockerCli *client.DockerCli, opts pullOptions) error {
 	return nil
 }
 
-func bundlePullPrivileged(ctx context.Context, cli *client.DockerCli, authConfig types.AuthConfig, ref string, requestPrivilege types.RequestPrivilegeFunc) error {
+func bundlePullPrivileged(ctx context.Context, cli *command.DockerCli, authConfig types.AuthConfig, ref string, requestPrivilege types.RequestPrivilegeFunc) error {
 
-	encodedAuth, err := client.EncodeAuthToBase64(authConfig)
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
 	if err != nil {
 		return err
 	}
@@ -105,5 +106,5 @@ func bundlePullPrivileged(ctx context.Context, cli *client.DockerCli, authConfig
 	defer responseBody.Close()
 
 	// TODO: use new function here
-	return jsonmessage.DisplayJSONMessagesStream(responseBody, cli.Out(), cli.OutFd(), cli.IsTerminalOut(), nil)
+	return jsonmessage.DisplayJSONMessagesToStream(responseBody, cli.Out(), nil)
 }

@@ -5,13 +5,13 @@ package bundle
 import (
 	"fmt"
 
-	"github.com/docker/docker/api/client"
 	"github.com/docker/docker/cli"
+	"github.com/docker/docker/cli/command"
 	"github.com/spf13/cobra"
 )
 
 // NewBundleCommand returns a cobra command for `bundle` subcommands
-func NewBundleCommand(dockerCli *client.DockerCli) *cobra.Command {
+func NewBundleCommand(dockerCli *command.DockerCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bundle",
 		Short: "Manage Docker bundles",

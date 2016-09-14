@@ -8,9 +8,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/docker/docker/api/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli"
+	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/reference"
@@ -24,7 +24,7 @@ type listOptions struct {
 	filter opts.FilterOpt
 }
 
-func newListCommand(dockerCli *client.DockerCli) *cobra.Command {
+func newListCommand(dockerCli *command.DockerCli) *cobra.Command {
 	opts := listOptions{filter: opts.NewFilterOpt()}
 
 	cmd := &cobra.Command{
@@ -44,7 +44,7 @@ func newListCommand(dockerCli *client.DockerCli) *cobra.Command {
 	return cmd
 }
 
-func runList(dockerCli *client.DockerCli, opts listOptions) error {
+func runList(dockerCli *command.DockerCli, opts listOptions) error {
 	ctx := context.Background()
 	client := dockerCli.Client()
 

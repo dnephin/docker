@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/api/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli"
+	"github.com/docker/docker/cli/command"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -18,7 +18,7 @@ type removeOptions struct {
 	noPrune bool
 }
 
-func newRemoveCommand(dockerCli *client.DockerCli) *cobra.Command {
+func newRemoveCommand(dockerCli *command.DockerCli) *cobra.Command {
 	var opts removeOptions
 
 	cmd := &cobra.Command{
@@ -38,7 +38,7 @@ func newRemoveCommand(dockerCli *client.DockerCli) *cobra.Command {
 	return cmd
 }
 
-func runRemove(dockerCli *client.DockerCli, opts removeOptions, bundles []string) error {
+func runRemove(dockerCli *command.DockerCli, opts removeOptions, bundles []string) error {
 	client := dockerCli.Client()
 	ctx := context.Background()
 
