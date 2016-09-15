@@ -5,7 +5,6 @@ import (
 	"path"
 	"sort"
 
-	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/image"
@@ -136,7 +135,7 @@ func (daemon *Daemon) Images(filterArgs, filter string, all bool) ([]*types.Imag
 
 		newImage := newImage(img, size)
 
-		for _, ref := range daemon.referenceStore.References(digest.Digest(id)) {
+		for _, ref := range daemon.referenceStore.References(id.Digest()) {
 			if filter != "" { // filter by tag/repo name
 				if filterTagged { // filter by tag, require full ref match
 					if ref.String() != filter {

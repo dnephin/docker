@@ -113,7 +113,7 @@ func (daemon *Daemon) Bundles(filterArgs, filter string) ([]*types.Bundle, error
 
 		newBundle := newAPIBundle(b)
 
-		for _, ref := range daemon.bundleReferenceStore.References(digest.Digest(id)) {
+		for _, ref := range daemon.bundleReferenceStore.References(id.Digest()) {
 			if filter != "" { // filter by tag/repo name
 				if filterTagged { // filter by tag, require full ref match
 					if ref.String() != filter {
@@ -166,7 +166,7 @@ func (daemon *Daemon) GetBundleID(refOrID string) (bundle.ID, error) {
 	}
 	if tagged, ok := ref.(reference.NamedTagged); ok {
 		if id, err := daemon.bundleStore.Search(tagged.Tag()); err == nil {
-			for _, namedRef := range daemon.bundleReferenceStore.References(digest.Digest(id)) {
+			for _, namedRef := range daemon.bundleReferenceStore.References(id.Digest()) {
 				if namedRef.Name() == ref.Name() {
 					return id, nil
 				}
@@ -200,7 +200,7 @@ func (daemon *Daemon) LookupBundle(name string) (*types.BundleInspect, error) {
 	}
 
 	// todo(tonistiigi): separate to func
-	refs := daemon.bundleReferenceStore.References(digest.Digest(bundle.ID()))
+	refs := daemon.bundleReferenceStore.References(bundle.ID().Digest())
 	repoTags := []string{}
 	repoDigests := []string{}
 	for _, ref := range refs {
@@ -365,7 +365,7 @@ func (daemon *Daemon) TagBundle(bundleName, repository, tag string) error {
 
 // TagBundleWithReference adds the given reference to the bundle ID provided.
 func (daemon *Daemon) TagBundleWithReference(bundleID bundle.ID, newTag reference.Named) error {
-	if err := daemon.bundleReferenceStore.AddTag(newTag, digest.Digest(bundleID), true); err != nil {
+	if err := daemon.bundleReferenceStore.AddTag(newTag, bundleID.Digest(), true); err != nil {
 		return err
 	}
 
@@ -426,7 +426,7 @@ func (daemon *Daemon) BundleDelete(bundleRef string, force, prune bool) ([]types
 		return nil, daemon.refNotExistToErrcode("bundle", err)
 	}
 
-	repoRefs := daemon.bundleReferenceStore.References(digest.Digest(bundleID))
+	repoRefs := daemon.bundleReferenceStore.References(bundleID.Digest())
 
 	for _, r := range repoRefs {
 		if _, err := daemon.bundleReferenceStore.Delete(r); err != nil {
@@ -524,7 +524,7 @@ func (daemon *Daemon) ResolveBundleManifest(bundleRef string) (*bundle.Bundle, e
 		if err != nil {
 			return nil, err
 		}
-		return daemon.bundleStore.Get(bundle.ID(dgst))
+		return daemon.bundleStore.Get(bundle.IDFromDigest(dgst))
 	}
 
 	return bundle.NewFromJSON(selector.config)
@@ -578,7 +578,7 @@ func (daemon *Daemon) PullBundleImage(ctx context.Context, bundleRef, imageName 
 		if err != nil {
 			return "", err
 		}
-		bundle, err := daemon.bundleStore.Get(bundle.ID(dgst))
+		bundle, err := daemon.bundleStore.Get(bundle.IDFromDigest(dgst))
 		if err != nil {
 			return "", err
 		}

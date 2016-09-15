@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/registry/client/transport"
 	"github.com/docker/docker/distribution/metadata"
 	"github.com/docker/docker/distribution/xfer"
@@ -249,7 +248,7 @@ func (p *v1Puller) pullImage(ctx context.Context, v1ID, endpoint string, localNa
 		return err
 	}
 
-	if err := p.config.ReferenceStore.AddTag(localNameRef, digest.Digest(imageID), true); err != nil {
+	if err := p.config.ReferenceStore.AddTag(localNameRef, imageID.Digest(), true); err != nil {
 		return err
 	}
 

@@ -504,7 +504,7 @@ func (p *v2Puller) pullSchema1(ctx context.Context, ref reference.Named, unverif
 
 	manifestDigest = digest.FromBytes(unverifiedManifest.Canonical)
 
-	return digest.Digest(imageID), manifestDigest, nil
+	return imageID.Digest(), manifestDigest, nil
 }
 
 func (p *v2Puller) pullBundleSchema2(ctx context.Context, ref reference.Named, mfst *schema2.DeserializedManifest) (id digest.Digest, manifestDigest digest.Digest, err error) {
@@ -562,7 +562,7 @@ func (p *v2Puller) pullBundleSchema2(ctx context.Context, ref reference.Named, m
 		return "", "", err
 	}
 
-	return digest.Digest(bundleID), manifestDigest, nil
+	return bundleID.Digest(), manifestDigest, nil
 
 }
 
@@ -704,7 +704,7 @@ func (p *v2Puller) pullSchema2(ctx context.Context, ref reference.Named, mfst *s
 		return "", "", err
 	}
 
-	return digest.Digest(imageID), manifestDigest, nil
+	return imageID.Digest(), manifestDigest, nil
 }
 
 func receiveConfig(configChan <-chan []byte, errChan <-chan error) ([]byte, image.Image, error) {

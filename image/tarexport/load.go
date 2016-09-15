@@ -124,7 +124,7 @@ func (l *tarexporter) Load(inTar io.ReadCloser, outStream io.Writer, quiet bool)
 			if !ok {
 				return fmt.Errorf("invalid tag %q", repoTag)
 			}
-			l.setLoadedTag(ref, digest.Digest(imgID), outStream)
+			l.setLoadedTag(ref, imgID.Digest(), outStream)
 			outStream.Write([]byte(fmt.Sprintf("Loaded image: %s\n", ref)))
 			imageRefCount++
 		}
@@ -254,7 +254,7 @@ func (l *tarexporter) legacyLoad(tmpDir string, outStream io.Writer, progressOut
 			if err != nil {
 				return err
 			}
-			l.setLoadedTag(ref, digest.Digest(imgID), outStream)
+			l.setLoadedTag(ref, imgID.Digest(), outStream)
 		}
 	}
 

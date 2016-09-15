@@ -3,7 +3,6 @@ package daemon
 import (
 	"fmt"
 
-	"github.com/docker/distribution/digest"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/image"
@@ -39,7 +38,7 @@ func (daemon *Daemon) GetImageID(refOrID string) (image.ID, error) {
 	}
 	if tagged, ok := ref.(reference.NamedTagged); ok {
 		if id, err := daemon.imageStore.Search(tagged.Tag()); err == nil {
-			for _, namedRef := range daemon.referenceStore.References(digest.Digest(id)) {
+			for _, namedRef := range daemon.referenceStore.References(id.Digest()) {
 				if namedRef.Name() == ref.Name() {
 					return id, nil
 				}

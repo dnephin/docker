@@ -13,7 +13,15 @@ import (
 type ID digest.Digest
 
 func (id ID) String() string {
-	return digest.Digest(id).String()
+	return id.Digest().String()
+}
+
+func (id ID) Digest() digest.Digest {
+	return digest.Digest(id)
+}
+
+func IDFromDigest(digest digest.Digest) ID {
+	return ID(digest)
 }
 
 // Bundle stores the bundle configuration

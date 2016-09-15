@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/reference"
 )
@@ -29,7 +28,7 @@ func (daemon *Daemon) TagImage(imageName, repository, tag string) error {
 
 // TagImageWithReference adds the given reference to the image ID provided.
 func (daemon *Daemon) TagImageWithReference(imageID image.ID, newTag reference.Named) error {
-	if err := daemon.referenceStore.AddTag(newTag, digest.Digest(imageID), true); err != nil {
+	if err := daemon.referenceStore.AddTag(newTag, imageID.Digest(), true); err != nil {
 		return err
 	}
 

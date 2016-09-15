@@ -92,7 +92,7 @@ type v1TopImage struct {
 }
 
 func newV1TopImage(imageID image.ID, img *image.Image, l layer.Layer, parent *v1DependencyImage) (*v1TopImage, error) {
-	v1ID := digest.Digest(imageID).Hex()
+	v1ID := imageID.Digest().Hex()
 	parentV1ID := ""
 	if parent != nil {
 		parentV1ID = parent.V1ID()

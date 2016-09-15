@@ -123,7 +123,7 @@ func (p *v2Pusher) pushV2BundleTag(ctx context.Context, ref reference.NamedTagge
 	var descriptors []distribution.Descriptor
 	p.config.BundleStore = nil // todo: make into var
 	for _, s := range bundle.Services {
-		d, err := p.pushV2Tag(ctx, nil, digest.Digest(s.Image))
+		d, err := p.pushV2Tag(ctx, nil, s.Image.Digest())
 		if err != nil {
 			return nil, err
 		}

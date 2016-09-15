@@ -155,7 +155,7 @@ func (s *saveSession) save(outStream io.Writer) error {
 		}
 
 		manifest = append(manifest, manifestItem{
-			Config:       digest.Digest(id).Hex() + ".json",
+			Config:       id.Digest().Hex() + ".json",
 			RepoTags:     repoTags,
 			Layers:       layers,
 			LayerSources: foreignSrcs,
@@ -264,7 +264,7 @@ func (s *saveSession) saveImage(id image.ID) (map[layer.DiffID]distribution.Desc
 		}
 	}
 
-	configFile := filepath.Join(s.outDir, digest.Digest(id).Hex()+".json")
+	configFile := filepath.Join(s.outDir, id.Digest().Hex()+".json")
 	if err := ioutil.WriteFile(configFile, img.RawJSON(), 0644); err != nil {
 		return nil, err
 	}

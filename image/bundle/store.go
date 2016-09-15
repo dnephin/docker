@@ -56,10 +56,10 @@ func NewBundleStore(fs image.StoreBackend, is image.Store) (Store, error) {
 }
 
 func (bs *store) restore() error {
-	err := bs.fs.Walk(func(id digest.Digest) error {
-		bundle, err := bs.Get(ID(id))
+	err := bs.fs.Walk(func(dgst digest.Digest) error {
+		bundle, err := bs.Get(IDFromDigest(dgst))
 		if err != nil {
-			logrus.Errorf("invalid bundle %v, %v", id, err)
+			logrus.Errorf("invalid bundle %v, %v", dgst, err)
 			return nil
 		}
 		for _, s := range bundle.Services {
@@ -67,10 +67,10 @@ func (bs *store) restore() error {
 				return err
 			}
 		}
-		if err := bs.digestSet.Add(digest.Digest(id)); err != nil {
+		if err := bs.digestSet.Add(dgst); err != nil {
 			return err
 		}
-		bs.bundles[ID(id)] = struct{}{}
+		bs.bundles[IDFromDigest(dgst)] = struct{}{}
 		return nil
 	})
 	if err != nil {
@@ -94,7 +94,7 @@ func (bs *store) Create(config []byte) (ID, error) {
 	if err != nil {
 		return "", err
 	}
-	bundleID := ID(dgst)
+	bundleID := IDFromDigest(dgst)
 
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
@@ -104,7 +104,7 @@ func (bs *store) Create(config []byte) (ID, error) {
 	}
 
 	bs.bundles[bundleID] = struct{}{}
-	if err := bs.digestSet.Add(digest.Digest(bundleID)); err != nil {
+	if err := bs.digestSet.Add(bundleID.Digest()); err != nil {
 		delete(bs.bundles, bundleID)
 		return "", err
 	}
@@ -123,13 +123,13 @@ func (bs *store) Search(term string) (ID, error) {
 		}
 		return "", err
 	}
-	return ID(dgst), nil
+	return IDFromDigest(dgst), nil
 }
 
 func (bs *store) Get(id ID) (*Bundle, error) {
 	// todo: Check if bundle is in bundles
 	// todo: Detect manual insertions and start using them
-	config, err := bs.fs.Get(digest.Digest(id))
+	config, err := bs.fs.Get(id.Digest())
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +147,11 @@ func (bs *store) Delete(id ID) ([]layer.Metadata, error) {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
 
-	if err := bs.digestSet.Remove(digest.Digest(id)); err != nil {
+	if err := bs.digestSet.Remove(id.Digest()); err != nil {
 		logrus.Errorf("error removing %s from digest set: %q", id, err)
 	}
 	delete(bs.bundles, id)
-	bs.fs.Delete(digest.Digest(id))
+	bs.fs.Delete(id.Digest())
 
 	// todo: unreference images
 
