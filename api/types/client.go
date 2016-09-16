@@ -319,3 +319,8 @@ type BundlePullOptions struct {
 
 //ImagePushOptions holds information to push bundles.
 type BundlePushOptions BundlePullOptions
+
+type StackCreateOptions struct {
+	Bundle string
+	Name   string
+}

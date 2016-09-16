@@ -21,6 +21,7 @@ type CommonAPIClient interface {
 	BundleAPIClient
 	NetworkAPIClient
 	ServiceAPIClient
+	StackAPIClient
 	SwarmAPIClient
 	SystemAPIClient
 	VolumeAPIClient
@@ -118,6 +119,10 @@ type ServiceAPIClient interface {
 	ServiceUpdate(ctx context.Context, serviceID string, version swarm.Version, service swarm.ServiceSpec, options types.ServiceUpdateOptions) error
 	TaskInspectWithRaw(ctx context.Context, taskID string) (swarm.Task, []byte, error)
 	TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error)
+}
+
+type StackAPIClient interface {
+	StackCreate(context.Context, types.StackCreateOptions) (types.StackCreateResponse, error)
 }
 
 // SwarmAPIClient defines API client methods for the swarm
