@@ -543,8 +543,3 @@ type BundleService struct { // POC
 	Image *ImageInspect
 	Name  string
 }
-
-type StackCreateResponse struct {
-	// ID is the stack ID.
-	ID string `json:"Id"`
-}

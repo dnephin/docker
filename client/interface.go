@@ -121,8 +121,9 @@ type ServiceAPIClient interface {
 	TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error)
 }
 
+//StackAPIClient defines the API client methods for stacks
 type StackAPIClient interface {
-	StackCreate(context.Context, types.StackCreateOptions) (types.StackCreateResponse, error)
+	StackCreate(context.Context, types.StackCreateOptions) (swarm.StackCreateResponse, error)
 }
 
 // SwarmAPIClient defines API client methods for the swarm

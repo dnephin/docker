@@ -9,6 +9,8 @@ import (
 	swarmapi "github.com/docker/swarmkit/api"
 )
 
+const labelNamespace = "com.docker.stack.namespace"
+
 // CreateStack(name, bundle string) error // TODO: add config
 
 func (c *Cluster) CreateStack(name, bundleRef string) (*types.StackCreateResponse, error) {
@@ -38,8 +40,8 @@ func (c *Cluster) CreateStack(name, bundleRef string) (*types.StackCreateRespons
 		one := uint64(1)
 		serviceSpec, err := convert.ServiceSpecToGRPC(types.ServiceSpec{
 			Annotations: types.Annotations{
-				Name:   name + "-" + s.Name,
-				Labels: b.Labels,
+				Name:   name + "_" + s.Name,
+				Labels: getStackLabels(name, b.Labels),
 			},
 			TaskTemplate: types.TaskSpec{
 				ContainerSpec: types.ContainerSpec{
@@ -77,4 +79,12 @@ func (c *Cluster) CreateStack(name, bundleRef string) (*types.StackCreateRespons
 	}
 
 	return resp, nil
+}
+
+func getStackLabels(namespace string, labels map[string]string) map[string]string {
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[labelNamespace] = namespace
+	return labels
 }
