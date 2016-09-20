@@ -16,7 +16,7 @@ func (cli *Client) CheckpointList(ctx context.Context, container string) ([]type
 		return checkpoints, err
 	}
 
-	err = json.NewDecoder(resp.body).Decode(&checkpoints)
+	err = json.NewDecoder(resp.Body).Decode(&checkpoints)
 	ensureReaderClosed(resp)
 	return checkpoints, err
 }

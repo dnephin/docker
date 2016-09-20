@@ -15,14 +15,14 @@ import (
 func (cli *Client) ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
 	serverResp, err := cli.get(ctx, "/containers/"+containerID+"/json", nil, nil)
 	if err != nil {
-		if serverResp.statusCode == http.StatusNotFound {
+		if serverResp.StatusCode == http.StatusNotFound {
 			return types.ContainerJSON{}, containerNotFoundError{containerID}
 		}
 		return types.ContainerJSON{}, err
 	}
 
 	var response types.ContainerJSON
-	err = json.NewDecoder(serverResp.body).Decode(&response)
+	err = json.NewDecoder(serverResp.Body).Decode(&response)
 	ensureReaderClosed(serverResp)
 	return response, err
 }
@@ -35,14 +35,14 @@ func (cli *Client) ContainerInspectWithRaw(ctx context.Context, containerID stri
 	}
 	serverResp, err := cli.get(ctx, "/containers/"+containerID+"/json", query, nil)
 	if err != nil {
-		if serverResp.statusCode == http.StatusNotFound {
+		if serverResp.StatusCode == http.StatusNotFound {
 			return types.ContainerJSON{}, nil, containerNotFoundError{containerID}
 		}
 		return types.ContainerJSON{}, nil, err
 	}
 	defer ensureReaderClosed(serverResp)
 
-	body, err := ioutil.ReadAll(serverResp.body)
+	body, err := ioutil.ReadAll(serverResp.Body)
 	if err != nil {
 		return types.ContainerJSON{}, nil, err
 	}

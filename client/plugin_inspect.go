@@ -19,7 +19,7 @@ func (cli *Client) PluginInspectWithRaw(ctx context.Context, name string) (*type
 	}
 
 	defer ensureReaderClosed(resp)
-	body, err := ioutil.ReadAll(resp.body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, nil, err
 	}

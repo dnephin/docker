@@ -14,7 +14,7 @@ func (cli *Client) VolumeCreate(ctx context.Context, options types.VolumeCreateR
 	if err != nil {
 		return volume, err
 	}
-	err = json.NewDecoder(resp.body).Decode(&volume)
+	err = json.NewDecoder(resp.Body).Decode(&volume)
 	ensureReaderClosed(resp)
 	return volume, err
 }

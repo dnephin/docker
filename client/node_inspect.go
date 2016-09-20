@@ -14,14 +14,14 @@ import (
 func (cli *Client) NodeInspectWithRaw(ctx context.Context, nodeID string) (swarm.Node, []byte, error) {
 	serverResp, err := cli.get(ctx, "/nodes/"+nodeID, nil, nil)
 	if err != nil {
-		if serverResp.statusCode == http.StatusNotFound {
+		if serverResp.StatusCode == http.StatusNotFound {
 			return swarm.Node{}, nil, nodeNotFoundError{nodeID}
 		}
 		return swarm.Node{}, nil, err
 	}
 	defer ensureReaderClosed(serverResp)
 
-	body, err := ioutil.ReadAll(serverResp.body)
+	body, err := ioutil.ReadAll(serverResp.Body)
 	if err != nil {
 		return swarm.Node{}, nil, err
 	}

@@ -14,7 +14,7 @@ import (
 func (cli *Client) RegistryLogin(ctx context.Context, auth types.AuthConfig) (types.AuthResponse, error) {
 	resp, err := cli.post(ctx, "/auth", url.Values{}, auth, nil)
 
-	if resp.statusCode == http.StatusUnauthorized {
+	if resp.StatusCode == http.StatusUnauthorized {
 		return types.AuthResponse{}, unauthorizedError{err}
 	}
 	if err != nil {
@@ -22,7 +22,7 @@ func (cli *Client) RegistryLogin(ctx context.Context, auth types.AuthConfig) (ty
 	}
 
 	var response types.AuthResponse
-	err = json.NewDecoder(resp.body).Decode(&response)
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	ensureReaderClosed(resp)
 	return response, err
 }

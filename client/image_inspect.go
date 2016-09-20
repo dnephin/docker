@@ -14,14 +14,14 @@ import (
 func (cli *Client) ImageInspectWithRaw(ctx context.Context, imageID string) (types.ImageInspect, []byte, error) {
 	serverResp, err := cli.get(ctx, "/images/"+imageID+"/json", nil, nil)
 	if err != nil {
-		if serverResp.statusCode == http.StatusNotFound {
+		if serverResp.StatusCode == http.StatusNotFound {
 			return types.ImageInspect{}, nil, imageNotFoundError{imageID}
 		}
 		return types.ImageInspect{}, nil, err
 	}
 	defer ensureReaderClosed(serverResp)
 
-	body, err := ioutil.ReadAll(serverResp.body)
+	body, err := ioutil.ReadAll(serverResp.Body)
 	if err != nil {
 		return types.ImageInspect{}, nil, err
 	}

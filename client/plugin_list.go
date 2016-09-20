@@ -17,7 +17,7 @@ func (cli *Client) PluginList(ctx context.Context) (types.PluginsListResponse, e
 		return plugins, err
 	}
 
-	err = json.NewDecoder(resp.body).Decode(&plugins)
+	err = json.NewDecoder(resp.Body).Decode(&plugins)
 	ensureReaderClosed(resp)
 	return plugins, err
 }

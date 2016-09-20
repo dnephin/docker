@@ -21,14 +21,14 @@ func (cli *Client) NetworkInspectWithRaw(ctx context.Context, networkID string) 
 	var networkResource types.NetworkResource
 	resp, err := cli.get(ctx, "/networks/"+networkID, nil, nil)
 	if err != nil {
-		if resp.statusCode == http.StatusNotFound {
+		if resp.StatusCode == http.StatusNotFound {
 			return networkResource, nil, networkNotFoundError{networkID}
 		}
 		return networkResource, nil, err
 	}
 	defer ensureReaderClosed(resp)
 
-	body, err := ioutil.ReadAll(resp.body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return networkResource, nil, err
 	}

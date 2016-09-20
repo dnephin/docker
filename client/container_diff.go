@@ -17,7 +17,7 @@ func (cli *Client) ContainerDiff(ctx context.Context, containerID string) ([]typ
 		return changes, err
 	}
 
-	err = json.NewDecoder(serverResp.body).Decode(&changes)
+	err = json.NewDecoder(serverResp.Body).Decode(&changes)
 	ensureReaderClosed(serverResp)
 	return changes, err
 }

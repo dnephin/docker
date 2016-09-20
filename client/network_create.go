@@ -19,7 +19,7 @@ func (cli *Client) NetworkCreate(ctx context.Context, name string, options types
 		return response, err
 	}
 
-	json.NewDecoder(serverResp.body).Decode(&response)
+	json.NewDecoder(serverResp.Body).Decode(&response)
 	ensureReaderClosed(serverResp)
 	return response, err
 }

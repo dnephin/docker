@@ -25,7 +25,7 @@ func (cli *Client) ImageRemove(ctx context.Context, imageID string, options type
 	}
 
 	var dels []types.ImageDelete
-	err = json.NewDecoder(resp.body).Decode(&dels)
+	err = json.NewDecoder(resp.Body).Decode(&dels)
 	ensureReaderClosed(resp)
 	return dels, err
 }

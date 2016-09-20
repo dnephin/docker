@@ -26,7 +26,7 @@ func (cli *Client) ContainerStatPath(ctx context.Context, containerID, path stri
 		return types.ContainerPathStat{}, err
 	}
 	defer ensureReaderClosed(response)
-	return getContainerPathStatFromHeader(response.header)
+	return getContainerPathStatFromHeader(response.Header)
 }
 
 // CopyToContainer copies content into the container filesystem.
@@ -46,8 +46,8 @@ func (cli *Client) CopyToContainer(ctx context.Context, container, path string, 
 	}
 	defer ensureReaderClosed(response)
 
-	if response.statusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code from daemon: %d", response.statusCode)
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code from daemon: %d", response.StatusCode)
 	}
 
 	return nil
@@ -65,8 +65,8 @@ func (cli *Client) CopyFromContainer(ctx context.Context, container, srcPath str
 		return nil, types.ContainerPathStat{}, err
 	}
 
-	if response.statusCode != http.StatusOK {
-		return nil, types.ContainerPathStat{}, fmt.Errorf("unexpected status code from daemon: %d", response.statusCode)
+	if response.StatusCode != http.StatusOK {
+		return nil, types.ContainerPathStat{}, fmt.Errorf("unexpected status code from daemon: %d", response.StatusCode)
 	}
 
 	// In order to get the copy behavior right, we need to know information
@@ -75,11 +75,11 @@ func (cli *Client) CopyFromContainer(ctx context.Context, container, srcPath str
 	// copy it locally. Along with the stat info about the local destination,
 	// we have everything we need to handle the multiple possibilities there
 	// can be when copying a file/dir from one location to another file/dir.
-	stat, err := getContainerPathStatFromHeader(response.header)
+	stat, err := getContainerPathStatFromHeader(response.Header)
 	if err != nil {
 		return nil, stat, fmt.Errorf("unable to get resource stat from response: %s", err)
 	}
-	return response.body, stat, err
+	return response.Body, stat, err
 }
 
 func getContainerPathStatFromHeader(header http.Header) (types.ContainerPathStat, error) {

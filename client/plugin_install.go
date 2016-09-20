@@ -17,7 +17,7 @@ func (cli *Client) PluginInstall(ctx context.Context, name string, options types
 	query := url.Values{}
 	query.Set("name", name)
 	resp, err := cli.tryPluginPull(ctx, query, options.RegistryAuth)
-	if resp.statusCode == http.StatusUnauthorized && options.PrivilegeFunc != nil {
+	if resp.StatusCode == http.StatusUnauthorized && options.PrivilegeFunc != nil {
 		newAuthHeader, privilegeErr := options.PrivilegeFunc()
 		if privilegeErr != nil {
 			ensureReaderClosed(resp)
@@ -30,7 +30,7 @@ func (cli *Client) PluginInstall(ctx context.Context, name string, options types
 		return err
 	}
 	var privileges types.PluginPrivileges
-	if err := json.NewDecoder(resp.body).Decode(&privileges); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&privileges); err != nil {
 		ensureReaderClosed(resp)
 		return err
 	}
@@ -53,7 +53,7 @@ func (cli *Client) PluginInstall(ctx context.Context, name string, options types
 	return cli.PluginEnable(ctx, name)
 }
 
-func (cli *Client) tryPluginPull(ctx context.Context, query url.Values, registryAuth string) (serverResponse, error) {
+func (cli *Client) tryPluginPull(ctx context.Context, query url.Values, registryAuth string) (ServerResponse, error) {
 	headers := map[string][]string{"X-Registry-Auth": {registryAuth}}
 	return cli.post(ctx, "/plugins/pull", query, nil, headers)
 }

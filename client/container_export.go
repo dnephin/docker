@@ -16,5 +16,5 @@ func (cli *Client) ContainerExport(ctx context.Context, containerID string) (io.
 		return nil, err
 	}
 
-	return serverResp.body, nil
+	return serverResp.Body, nil
 }

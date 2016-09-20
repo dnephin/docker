@@ -44,5 +44,5 @@ func (cli *Client) Events(ctx context.Context, options types.EventsOptions) (io.
 	if err != nil {
 		return nil, err
 	}
-	return serverResponse.body, nil
+	return serverResponse.Body, nil
 }

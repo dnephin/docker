@@ -50,7 +50,7 @@ func (cli *Client) ContainerList(ctx context.Context, options types.ContainerLis
 	}
 
 	var containers []types.Container
-	err = json.NewDecoder(resp.body).Decode(&containers)
+	err = json.NewDecoder(resp.Body).Decode(&containers)
 	ensureReaderClosed(resp)
 	return containers, err
 }

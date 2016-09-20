@@ -14,14 +14,14 @@ import (
 func (cli *Client) ServiceInspectWithRaw(ctx context.Context, serviceID string) (swarm.Service, []byte, error) {
 	serverResp, err := cli.get(ctx, "/services/"+serviceID, nil, nil)
 	if err != nil {
-		if serverResp.statusCode == http.StatusNotFound {
+		if serverResp.StatusCode == http.StatusNotFound {
 			return swarm.Service{}, nil, serviceNotFoundError{serviceID}
 		}
 		return swarm.Service{}, nil, err
 	}
 	defer ensureReaderClosed(serverResp)
 
-	body, err := ioutil.ReadAll(serverResp.body)
+	body, err := ioutil.ReadAll(serverResp.Body)
 	if err != nil {
 		return swarm.Service{}, nil, err
 	}

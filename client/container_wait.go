@@ -18,7 +18,7 @@ func (cli *Client) ContainerWait(ctx context.Context, containerID string) (int, 
 	defer ensureReaderClosed(resp)
 
 	var res types.ContainerWaitResponse
-	if err := json.NewDecoder(resp.body).Decode(&res); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return -1, err
 	}
 

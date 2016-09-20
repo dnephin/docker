@@ -26,7 +26,7 @@ func (cli *Client) VolumeList(ctx context.Context, filter filters.Args) (types.V
 		return volumes, err
 	}
 
-	err = json.NewDecoder(resp.body).Decode(&volumes)
+	err = json.NewDecoder(resp.Body).Decode(&volumes)
 	ensureReaderClosed(resp)
 	return volumes, err
 }

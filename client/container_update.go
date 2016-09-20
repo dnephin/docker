@@ -16,7 +16,7 @@ func (cli *Client) ContainerUpdate(ctx context.Context, containerID string, upda
 		return response, err
 	}
 
-	err = json.NewDecoder(serverResp.body).Decode(&response)
+	err = json.NewDecoder(serverResp.Body).Decode(&response)
 
 	ensureReaderClosed(serverResp)
 	return response, err

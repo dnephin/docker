@@ -39,10 +39,10 @@ func (cli *Client) ImageBuild(ctx context.Context, buildContext io.Reader, optio
 		return types.ImageBuildResponse{}, err
 	}
 
-	osType := GetDockerOS(serverResp.header.Get("Server"))
+	osType := GetDockerOS(serverResp.Header.Get("Server"))
 
 	return types.ImageBuildResponse{
-		Body:   serverResp.body,
+		Body:   serverResp.Body,
 		OSType: osType,
 	}, nil
 }

@@ -21,14 +21,14 @@ func (cli *Client) VolumeInspectWithRaw(ctx context.Context, volumeID string) (t
 	var volume types.Volume
 	resp, err := cli.get(ctx, "/volumes/"+volumeID, nil, nil)
 	if err != nil {
-		if resp.statusCode == http.StatusNotFound {
+		if resp.StatusCode == http.StatusNotFound {
 			return volume, nil, volumeNotFoundError{volumeID}
 		}
 		return volume, nil, err
 	}
 	defer ensureReaderClosed(resp)
 
-	body, err := ioutil.ReadAll(resp.body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return volume, nil, err
 	}

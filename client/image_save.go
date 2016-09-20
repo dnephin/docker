@@ -18,5 +18,5 @@ func (cli *Client) ImageSave(ctx context.Context, imageIDs []string) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	return resp.body, nil
+	return resp.Body, nil
 }

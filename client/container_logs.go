@@ -48,5 +48,5 @@ func (cli *Client) ContainerLogs(ctx context.Context, container string, options 
 	if err != nil {
 		return nil, err
 	}
-	return resp.body, nil
+	return resp.Body, nil
 }

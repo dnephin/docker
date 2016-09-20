@@ -21,6 +21,6 @@ func (cli *Client) ContainerStats(ctx context.Context, containerID string, strea
 		return types.ContainerStats{}, err
 	}
 
-	osType := GetDockerOS(resp.header.Get("Server"))
-	return types.ContainerStats{Body: resp.body, OSType: osType}, err
+	osType := GetDockerOS(resp.Header.Get("Server"))
+	return types.ContainerStats{Body: resp.Body, OSType: osType}, err
 }

@@ -15,14 +15,14 @@ import (
 func (cli *Client) TaskInspectWithRaw(ctx context.Context, taskID string) (swarm.Task, []byte, error) {
 	serverResp, err := cli.get(ctx, "/tasks/"+taskID, nil, nil)
 	if err != nil {
-		if serverResp.statusCode == http.StatusNotFound {
+		if serverResp.StatusCode == http.StatusNotFound {
 			return swarm.Task{}, nil, taskNotFoundError{taskID}
 		}
 		return swarm.Task{}, nil, err
 	}
 	defer ensureReaderClosed(serverResp)
 
-	body, err := ioutil.ReadAll(serverResp.body)
+	body, err := ioutil.ReadAll(serverResp.Body)
 	if err != nil {
 		return swarm.Task{}, nil, err
 	}

@@ -16,7 +16,7 @@ func (cli *Client) ImageHistory(ctx context.Context, imageID string) ([]types.Im
 		return history, err
 	}
 
-	err = json.NewDecoder(serverResp.body).Decode(&history)
+	err = json.NewDecoder(serverResp.Body).Decode(&history)
 	ensureReaderClosed(serverResp)
 	return history, err
 }
