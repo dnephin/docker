@@ -1,16 +1,3 @@
-% DOCKER(1) Docker User Manuals
-% Docker Community
-% OCT 2015
-# NAME
-docker-network-connect - connect a container to a network
-
-# SYNOPSIS
-**docker network connect**
-[**--help**]
-NETWORK CONTAINER
-
-# DESCRIPTION
-
 Connects a container to a network. You can connect a container by name
 or by ID. Once connected, the container can communicate with other containers in
 the same network.
@@ -53,17 +40,3 @@ support multi-host connectivity, containers connected to the same multi-host
 network but launched from different Engines can also communicate in this way.
 
 You can connect a container to one or more networks. The networks need not be the same type. For example, you can connect a single container bridge and overlay networks.
-
-
-# OPTIONS
-**NETWORK**
-  Specify network name
-
-**CONTAINER**
-  Specify container name
-
-**--help**
-  Print usage statement
-
-# HISTORY
-OCT 2015, created by Mary Anthony <mary@docker.com>

@@ -1,17 +1,3 @@
-% DOCKER(1) Docker User Manuals
-% Docker Community
-% OCT 2015
-# NAME
-docker-network-inspect - inspect a network
-
-# SYNOPSIS
-**docker network inspect**
-[**-f**|**--format**[=*FORMAT*]]
-[**--help**]
-NETWORK [NETWORK...]
-
-# DESCRIPTION
-
 Returns information about one or more networks. By default, this command renders all results in a JSON object. For example, if you connect two containers to the default `bridge` network:
 
 ```bash
@@ -100,13 +86,3 @@ $ docker network inspect simple-network
     }
 ]
 ```
-
-# OPTIONS
-**-f**, **--format**=""
-  Format the output using the given go template.
-
-**--help**
-  Print usage statement
-
-# HISTORY
-OCT 2015, created by Mary Anthony <mary@docker.com>

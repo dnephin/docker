@@ -1,27 +1,3 @@
-% DOCKER(1) Docker User Manuals
-% Docker Community
-% OCT 2015
-# NAME
-docker-network-create - create a new network
-
-# SYNOPSIS
-**docker network create**
-[**--aux-address**=*map[]*]
-[**-d**|**--driver**=*DRIVER*]
-[**--gateway**=*[]*]
-[**--help**]
-[**--internal**]
-[**--ip-range**=*[]*]
-[**--ipam-driver**=*default*]
-[**--ipam-opt**=*map[]*]
-[**--ipv6**]
-[**--label**[=*[]*]]
-[**-o**|**--opt**=*map[]*]
-[**--subnet**=*[]*]
-NETWORK-NAME
-
-# DESCRIPTION
-
 Creates a new network. The `DRIVER` accepts `bridge` or `overlay` which are the
 built-in network drivers. If you have installed a third party or your own custom
 network driver you can specify that `DRIVER` here also. If you don't specify the
@@ -141,43 +117,3 @@ By default, when you connect a container to an `overlay` network, Docker also
 connects a bridge network to it to provide external connectivity. If you want
 to create an externally isolated `overlay` network, you can specify the
 `--internal` option.
-
-# OPTIONS
-**--aux-address**=map[]
-  Auxiliary IPv4 or IPv6 addresses used by network driver
-
-**-d**, **--driver**=*DRIVER*
-  Driver to manage the Network bridge or overlay. The default is bridge.
-
-**--gateway**=[]
-  IPv4 or IPv6 Gateway for the master subnet
-
-**--help**
-  Print usage
-
-**--internal**
-  Restrict external access to the network
-
-**--ip-range**=[]
-  Allocate container ip from a sub-range
-
-**--ipam-driver**=*default*
-  IP Address Management Driver
-
-**--ipam-opt**=map[]
-  Set custom IPAM driver options
-
-**--ipv6**
-  Enable IPv6 networking
-
-**--label**=*label*
-   Set metadata for a network
-
-**-o**, **--opt**=map[]
-  Set custom driver options
-
-**--subnet**=[]
-  Subnet in CIDR format that represents a network segment
-
-# HISTORY
-OCT 2015, created by Mary Anthony <mary@docker.com>

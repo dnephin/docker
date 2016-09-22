@@ -1,19 +1,3 @@
-% DOCKER(1) Docker User Manuals
-% Docker Community
-% OCT 2015
-# NAME
-docker-network-ls - list networks
-
-# SYNOPSIS
-**docker network ls**
-[**-f**|**--filter**[=*[]*]]
-[**--format**=*"TEMPLATE"*]
-[**--no-trunc**[=*true*|*false*]]
-[**-q**|**--quiet**[=*true*|*false*]]
-[**--help**]
-
-# DESCRIPTION
-
 Lists all the networks the Engine `daemon` knows about. This includes the
 networks that span across multiple hosts in a cluster, for example:
 
@@ -158,31 +142,16 @@ $ docker network rm `docker network ls --filter type=custom -q`
 A warning will be issued when trying to remove a network that has containers
 attached.
 
-# OPTIONS
+## Format
 
-**-f**, **--filter**=*[]*
-  filter output based on conditions provided. 
+Format uses a Go template to print the output. The following variables are 
+supported: 
 
-**--format**="*TEMPLATE*"
-  Pretty-print networks using a Go template.
-  Valid placeholders:
-     .ID - Network ID
-     .Name - Network name
-     .Driver - Network driver
-     .Scope - Network scope (local, global)
-     .IPv6 - Whether IPv6 is enabled on the network or not
-     .Internal - Whether the network is internal or not
-     .Labels - All labels assigned to the network
-     .Label - Value of a specific label for this network. For example `{{.Label "project.version"}}`
-
-**--no-trunc**=*true*|*false*
-  Do not truncate the output
-
-**-q**, **--quiet**=*true*|*false*
-  Only display network IDs
-
-**--help**
-  Print usage statement
-
-# HISTORY
-OCT 2015, created by Mary Anthony <mary@docker.com>
+* .ID - Network ID
+* .Name - Network name
+* .Driver - Network driver
+* .Scope - Network scope (local, global)
+* .IPv6 - Whether IPv6 is enabled on the network or not
+* .Internal - Whether the network is internal or not
+* .Labels - All labels assigned to the network
+* .Label - Value of a specific label for this network. For example `{{.Label "project.version"}}`
