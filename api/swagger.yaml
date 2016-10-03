@@ -90,23 +90,52 @@ definitions:
   MountPoint:
     type: "object"
     description: "A mount point inside a container"
+    required: [Source, Destination, Mode, RW, Propagation]
     properties:
       Type:
-        type: "string"
+        $ref: "#/definitions/MountType"
       Name:
         type: "string"
       Source:
         type: "string"
+        x-nullable: false
       Destination:
         type: "string"
+        x-nullable: false
       Driver:
         type: "string"
       Mode:
         type: "string"
+        x-nullable: false
       RW:
         type: "boolean"
+        x-nullable: false
       Propagation:
-        type: "string"
+        $ref: "#/definitions/MountPropagation"
+
+  MountType:
+    type: "string"
+    enum: [bind, volume]
+    description: |
+      The mount type. Available types:
+
+      - `bind` Mounts a file or directory from the host into the container.
+        Must exist prior to creating the container.
+      - `volume` Creates a volume with the given name and options (or uses
+        a pre-existing volume with the same name and options). These are
+        **not** removed when the container is removed.
+
+  MountPropagation:
+    type: "string"
+    x-nullable: false
+    description: "A propagation mode for a mount"
+    enum:
+      - "private"
+      - "rprivate"
+      - "shared"
+      - "rshared"
+      - "slave"
+      - "rslave"
 
   DeviceMapping:
     type: "object"
@@ -144,15 +173,7 @@ definitions:
       Source:
         description: "Mount source (e.g. a volume name, a host path)."
       Type:
-        description: |
-          The mount type. Available types:
-
-          - `bind` Mounts a file or directory from the host into the container. Must exist prior to creating the container.
-          - `volume` Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed.
-        type: "string"
-        enum:
-          - "bind"
-          - "volume"
+          $ref: "#/definitions/MountType"
       ReadOnly:
         description: "Whether the mount should be read-only."
         type: "boolean"
@@ -161,14 +182,7 @@ definitions:
         type: "object"
         properties:
           Propagation:
-            description: "A propagation mode with the value `[r]private`, `[r]shared`, or `[r]slave`."
-            enum:
-              - "private"
-              - "rprivate"
-              - "shared"
-              - "rshared"
-              - "slave"
-              - "rslave"
+            $ref: "#/definitions/MountPropagation"
       VolumeOptions:
         description: "Optional configuration for the `volume` type."
         type: "object"

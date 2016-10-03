@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
@@ -366,19 +365,6 @@ type DefaultNetworkSettings struct {
 	IPPrefixLen         int    // IPPrefixLen represents mask length of network's IPv4 address
 	IPv6Gateway         string // IPv6Gateway holds gateway address specific for IPv6
 	MacAddress          string // MacAddress holds the MAC address for the network
-}
-
-// MountPoint represents a mount point configuration inside the container.
-// This is used for reporting the mountpoints in use by a container.
-type MountPoint struct {
-	Type        mount.Type `json:",omitempty"`
-	Name        string     `json:",omitempty"`
-	Source      string
-	Destination string
-	Driver      string `json:",omitempty"`
-	Mode        string
-	RW          bool
-	Propagation mount.Propagation
 }
 
 // NetworkResource is the body of the "get network" http response message
