@@ -136,7 +136,7 @@ tgz: build ## build the archives (.zip on windows and .tgz\notherwise) containin
 	$(DOCKER_RUN_DOCKER) hack/make.sh dynbinary binary cross tgz
 
 validate: build ## validate DCO, Seccomp profile generation, gofmt,\n./pkg/ isolation, golint, tests, tomls, go vet and vendor
-	$(DOCKER_RUN_DOCKER) hack/make.sh validate-dco validate-default-seccomp validate-gofmt validate-pkg validate-lint validate-test validate-toml validate-vet validate-vendor
+	$(DOCKER_RUN_DOCKER) hack/validate/all && hack/validate/vendor
 
 win: build ## cross build the binary for windows
 	$(DOCKER_RUN_DOCKER) hack/make.sh win
