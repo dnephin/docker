@@ -22,4 +22,4 @@ ENV     GOPATH=$GOPATH:/go/src/github.com/docker/docker/vendor:/manvendor
 RUN     go build -o /usr/bin/go-md2man github.com/cpuguy83/go-md2man
 
 WORKDIR /go/src/github.com/docker/docker/
-ENTRYPOINT ["man/generate.sh"]
+ENTRYPOINT ["docs/gen/generate.sh"]

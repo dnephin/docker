@@ -18,27 +18,44 @@ import (
 const descriptionSourcePath = "man/src/"
 
 func generateManPages(opts *options) error {
+	cmd, err := loadCommands(opts.source)
+	if err != nil {
+		return err
+	}
+
 	header := &doc.GenManHeader{
 		Title:   "DOCKER",
 		Section: "1",
 		Source:  "Docker Community",
 	}
 
+	return doc.GenManTreeFromOpts(cmd, doc.GenManTreeOptions{
+		Header:           header,
+		Path:             opts.manTarget,
+		CommandSeparator: "-",
+	})
+}
+
+func generateCliReferenceDocs(opts *options) error {
+	cmd, err := loadCommands(opts.source)
+	if err != nil {
+		return err
+	}
+
+	return doc.GenMarkdownTree(cmd, opts.cliTarget)
+}
+
+func loadCommands(source string) (*cobra.Command, error) {
 	stdin, stdout, stderr := term.StdStreams()
 	dockerCli := command.NewDockerCli(stdin, stdout, stderr)
 	cmd := &cobra.Command{Use: "docker"}
 	commands.AddCommands(cmd, dockerCli)
-	source := filepath.Join(opts.source, descriptionSourcePath)
+	source = filepath.Join(source, descriptionSourcePath)
 	if err := loadLongDescription(cmd, source); err != nil {
-		return err
+		return cmd, err
 	}
-
 	cmd.DisableAutoGenTag = true
-	return doc.GenManTreeFromOpts(cmd, doc.GenManTreeOptions{
-		Header:           header,
-		Path:             opts.target,
-		CommandSeparator: "-",
-	})
+	return cmd, nil
 }
 
 func loadLongDescription(cmd *cobra.Command, path string) error {
@@ -67,8 +84,9 @@ func loadLongDescription(cmd *cobra.Command, path string) error {
 }
 
 type options struct {
-	source string
-	target string
+	source    string
+	manTarget string
+	cliTarget string
 }
 
 func parseArgs() (*options, error) {
@@ -76,7 +94,8 @@ func parseArgs() (*options, error) {
 	cwd, _ := os.Getwd()
 	flags := pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError)
 	flags.StringVar(&opts.source, "root", cwd, "Path to project root")
-	flags.StringVar(&opts.target, "target", "/tmp", "Target path for generated man pages")
+	flags.StringVar(&opts.manTarget, "man", "", "Target path for generated man pages")
+	flags.StringVar(&opts.cliTarget, "cli", "", "Target path for generated cli reference")
 	err := flags.Parse(os.Args[1:])
 	return opts, err
 }
@@ -87,8 +106,22 @@ func main() {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
 	fmt.Printf("Project root: %s\n", opts.source)
-	fmt.Printf("Generating man pages into %s\n", opts.target)
-	if err := generateManPages(opts); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to generate man pages: %s\n", err.Error())
+	if opts.manTarget != "" {
+		fmt.Printf("Generating man pages into %s\n", opts.manTarget)
+		if err := generateManPages(opts); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to generate man pages: %s\n", err.Error())
+			os.Exit(2)
+		}
+	}
+	if opts.cliTarget != "" {
+		fmt.Printf("Generating cli reference into %s\n", opts.cliTarget)
+		if err := generateCliReferenceDocs(opts); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to generate cli reference: %s\n", err.Error())
+			os.Exit(2)
+		}
+	}
+	if opts.manTarget == "" && opts.cliTarget == "" {
+		fmt.Fprintln(os.Stderr, "Nothing to do")
+		os.Exit(1)
 	}
 }
