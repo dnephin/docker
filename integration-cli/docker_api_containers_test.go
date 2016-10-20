@@ -957,7 +957,7 @@ func (s *DockerSuite) TestContainerAPIWait(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusOK)
 	c.Assert(waitInspect(name, "{{ .State.Running  }}", "false", 60*time.Second), checker.IsNil)
 
-	var waitres types.ContainerWaitResponse
+	var waitres containertypes.ContainerWaitOKBody
 	c.Assert(json.Unmarshal(body, &waitres), checker.IsNil)
 	c.Assert(waitres.StatusCode, checker.Equals, 0)
 }
