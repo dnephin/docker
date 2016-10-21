@@ -3044,8 +3044,7 @@ paths:
         - `1`: Added
         - `2`: Deleted
       operationId: "GetContainerChanges"
-      produces:
-        - "application/json"
+      produces: ["application/json"]
       responses:
         200:
           description: "no error"
@@ -4336,15 +4335,15 @@ paths:
     get:
       summary: "Get the history of an image"
       description: "Return parent layers of an image."
-      operationId: "GetImageHistory"
-      produces:
-        - "application/json"
+      operationId: "ImageHistory"
+      produces: ["application/json"]
       responses:
         200:
-          description: "No error"
+          description: "The image history returned successfully"
           schema:
             type: "array"
             items:
+              x-go-name: ImageHistoryResponse
               type: "object"
               properties:
                 Id:

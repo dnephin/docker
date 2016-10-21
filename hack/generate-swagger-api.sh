@@ -18,4 +18,5 @@ swagger generate operation -f api/swagger.yaml \
     -n ContainerCreate \
     -n ContainerUpdate \
     -n Authenticate \
-    -n ContainerWait
+    -n ContainerWait \
+    -n ImageHistory
