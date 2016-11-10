@@ -103,7 +103,7 @@ func (daemon *Daemon) ImagesPrune(config *types.ImagesPruneConfig) (*types.Image
 			continue
 		}
 
-		deletedImages := []types.ImageDelete{}
+		deletedImages := []types.ImageDeleteResponseItem{}
 		refs := daemon.referenceStore.References(dgst)
 		if len(refs) > 0 {
 			if config.DanglingOnly {
