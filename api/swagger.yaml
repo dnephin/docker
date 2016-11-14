@@ -3081,7 +3081,7 @@ paths:
     get:
       summary: "List processes running inside a container"
       description: "On Unix systems, this is done by running the `ps` command. This endpoint is not supported on Windows."
-      operationId: "GetContainerTop"
+      operationId: "ContainerTop"
       responses:
         200:
           description: "no error"
@@ -3152,8 +3152,7 @@ paths:
           description: "The arguments to pass to `ps`. For example, `aux`"
           type: "string"
           default: "-ef"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/logs:
     get:
       summary: "Get container logs"
@@ -3309,18 +3308,19 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/stats:
     get:
       summary: "Get container stats based on resource usage"
       description: |
-        This endpoint returns a live stream of a container’s resource usage statistics.
+        This endpoint returns a live stream of a container’s resource usage
+        statistics.
 
-        The `precpu_stats` is the CPU statistic of last read, which is used for calculating the CPU usage percentage. It is not the same as the `cpu_stats` field.
-      operationId: "GetContainerStats"
-      produces:
-        - "application/json"
+        The `precpu_stats` is the CPU statistic of last read, which is used
+        for calculating the CPU usage percentage. It is not the same as the
+        `cpu_stats` field.
+      operationId: "ContainerStats"
+      produces: ["application/json"]
       responses:
         200:
           description: "no error"
@@ -3438,8 +3438,7 @@ paths:
           description: "Stream the output. If false, the stats will be output once and then it will disconnect."
           type: "boolean"
           default: true
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/resize:
     post:
       summary: "Resize a container TTY"
@@ -4049,7 +4048,7 @@ paths:
     head:
       summary: "Get information about files in a container"
       description: "A response header `X-Docker-Container-Path-Stat` is return containing a base64 - encoded JSON object with some filesystem header information about the path."
-      operationId: "HeadContainerArchive"
+      operationId: "ContainerArchiveInfo"
       responses:
         200:
           description: "no error"
@@ -4090,14 +4089,12 @@ paths:
           required: true
           description: "Resource in the container’s filesystem to archive."
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
     get:
       summary: "Get an archive of a filesystem resource in a container"
       description: "Get an tar archive of a resource in the filesystem of container id."
-      operationId: "GetContainerArchive"
-      produces:
-        - "application/x-tar"
+      operationId: "ContainerArchive"
+      produces: ["application/x-tar"]
       responses:
         200:
           description: "no error"
@@ -4134,15 +4131,12 @@ paths:
           required: true
           description: "Resource in the container’s filesystem to archive."
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
     put:
       summary: "Extract an archive of files or folders to a directory in a container"
       description: "Upload a tar archive to be extracted to a path in the filesystem of container id."
       operationId: "PutContainerArchive"
-      consumes:
-        - "application/x-tar"
-        - "application/octet-stream"
+      consumes: ["application/x-tar", "application/octet-stream"]
       responses:
         200:
           description: "The content was extracted successfully"
@@ -4186,8 +4180,7 @@ paths:
           description: "The input stream must be a tar archive compressed with one of the following algorithms: identity (no compression), gzip, bzip2, xz."
           schema:
             type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/prune:
     post:
       summary: "Delete stopped containers"
