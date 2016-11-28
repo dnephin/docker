@@ -100,21 +100,6 @@ type Ping struct {
 	Experimental bool
 }
 
-// Version contains response of Engine API:
-// GET "/version"
-type Version struct {
-	Version       string
-	APIVersion    string `json:"ApiVersion"`
-	MinAPIVersion string `json:"MinAPIVersion,omitempty"`
-	GitCommit     string
-	GoVersion     string
-	Os            string
-	Arch          string
-	KernelVersion string `json:",omitempty"`
-	Experimental  bool   `json:",omitempty"`
-	BuildTime     string `json:",omitempty"`
-}
-
 // Commit records a external tool actual commit id version along the
 // one expect by dockerd as set at build time
 type Commit struct {
