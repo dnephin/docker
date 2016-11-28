@@ -23,6 +23,7 @@ swagger generate operation -f api/swagger.yaml \
     -n ContainerUpdate \
     -n ContainerWait \
     -n ImageHistory \
+    -n SystemInformation \
     -n Version \
     -n VolumesCreate \
     -n VolumesList

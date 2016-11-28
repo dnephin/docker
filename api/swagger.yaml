@@ -4940,110 +4940,199 @@ paths:
   /info:
     get:
       summary: "Get system information"
-      operationId: "getSystemInformation"
-      produces:
-        - "application/json"
+      operationId: "SystemInformation"
+      produces: ["application/json"]
       responses:
         200:
           description: "No error"
+          required:
+            - Architecture
+            - Containers
+            - ContainersPaused
+            - ContainersRunning
+            - ContainersStopped
+            - CpuCfsPeriod
+            - CpuCfsQuota
+            - Debug
+            - DiscoveryBackend
+            - DockerRootDir
+            - Driver
+            - DriverStatus
+            - ExperimentalBuild
+            - HttpProxy
+            - HttpsProxy
+            - ID
+            - IPv4Forwarding
+            - Images
+            - IndexServerAddress
+            - InitPath
+            - InitSha1
+            - KernelVersion
+            - Labels
+            - MemTotal
+            - MemoryLimit
+            - NCPU
+            - NEventsListener
+            - NFd
+            - NGoroutines
+            - Name
+            - NoProxy
+            - OSType
+            - OomKillDisable
+            - OomScoreAdj
+            - OperatingSystem
+            - Plugins
+            - RegistryConfig
+            - ServerVersion
+            - SwapLimit
+            - SystemStatus
+            - SystemTime
           schema:
             type: "object"
             properties:
               Architecture:
                 type: "string"
+                x-nullable: false
               Containers:
                 type: "integer"
+                x-nullable: false
               ContainersRunning:
                 type: "integer"
+                x-nullable: false
               ContainersStopped:
                 type: "integer"
+                x-nullable: false
               ContainersPaused:
                 type: "integer"
+                x-nullable: false
               CpuCfsPeriod:
                 type: "boolean"
+                x-nullable: false
               CpuCfsQuota:
                 type: "boolean"
+                x-nullable: false
               Debug:
                 type: "boolean"
+                x-nullable: false
               DiscoveryBackend:
                 type: "string"
+                x-nullable: false
               DockerRootDir:
                 type: "string"
+                x-nullable: false
               Driver:
                 type: "string"
+                x-nullable: false
               DriverStatus:
                 type: "array"
+                x-nullable: false
                 items:
                   type: "array"
                   items:
                     type: "string"
               SystemStatus:
                 type: "array"
+                x-nullable: false
                 items:
                   type: "array"
                   items:
                     type: "string"
               Plugins:
                 type: "object"
+                x-nullable: false
+                x-go-name: PluginsInfo
                 properties:
                   Volume:
                     type: "array"
+                    description: "The list of registered volume plugins"
                     items:
                       type: "string"
                   Network:
                     type: "array"
+                    description: "The list of registered network plugins"
                     items:
                       type: "string"
+                  Authorization:
+                    type: "array"
+                    description: "The list of registered authorization plugins"
+                    items:
+                      type: "string"
+
               ExperimentalBuild:
                 type: "boolean"
+                x-nullable: false
               HttpProxy:
                 type: "string"
+                x-nullable: false
               HttpsProxy:
                 type: "string"
+                x-nullable: false
               ID:
                 type: "string"
+                x-nullable: false
               IPv4Forwarding:
                 type: "boolean"
+                x-nullable: false
               Images:
                 type: "integer"
+                x-nullable: false
               IndexServerAddress:
                 type: "string"
+                x-nullable: false
               InitPath:
                 type: "string"
+                x-nullable: false
               InitSha1:
                 type: "string"
+                x-nullable: false
               KernelVersion:
                 type: "string"
+                x-nullable: false
               Labels:
                 type: "array"
+                x-nullable: false
                 items:
                   type: "string"
               MemTotal:
                 type: "integer"
+                x-nullable: false
               MemoryLimit:
                 type: "boolean"
+                x-nullable: false
               NCPU:
                 type: "integer"
+                x-nullable: false
               NEventsListener:
                 type: "integer"
+                x-nullable: false
               NFd:
                 type: "integer"
+                x-nullable: false
               NGoroutines:
                 type: "integer"
+                x-nullable: false
               Name:
                 type: "string"
+                x-nullable: false
               NoProxy:
                 type: "string"
+                x-nullable: false
               OomKillDisable:
                 type: "boolean"
+                x-nullable: false
               OSType:
                 type: "string"
+                x-nullable: false
               OomScoreAdj:
                 type: "integer"
+                x-nullable: false
               OperatingSystem:
                 type: "string"
+                x-nullable: false
               RegistryConfig:
                 type: "object"
+                x-nullable: false
+                x-go-name: RegistryServiceConfig
                 properties:
                   IndexConfigs:
                     type: "object"
@@ -5066,10 +5155,13 @@ paths:
                       type: "string"
               SwapLimit:
                 type: "boolean"
+                x-nullable: false
               SystemTime:
                 type: "string"
+                x-nullable: false
               ServerVersion:
                 type: "string"
+                x-nullable: false
           examples:
             application/json:
               Architecture: "x86_64"
@@ -5148,8 +5240,7 @@ paths:
           description: "Server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Misc"
+      tags: ["System"]
   /version:
     get:
       summary: "Get version"

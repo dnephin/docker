@@ -213,17 +213,6 @@ func DecodeSecurityOptions(opts []string) ([]SecurityOpt, error) {
 	return so, nil
 }
 
-// PluginsInfo is a temp struct holding Plugins name
-// registered with docker daemon. It is used by Info struct
-type PluginsInfo struct {
-	// List of Volume plugins registered
-	Volume []string
-	// List of Network plugins registered
-	Network []string
-	// List of Authorization plugins registered
-	Authorization []string
-}
-
 // ExecStartCheck is a temp struct used by execStart
 // Config fields is part of ExecConfig in runconfig package
 type ExecStartCheck struct {
