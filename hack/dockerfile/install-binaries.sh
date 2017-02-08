@@ -54,6 +54,14 @@ install_bindata() {
 	go build -o /usr/local/bin/go-bindata github.com/jteeuwen/go-bindata/go-bindata
 }
 
+install_swagger() {
+    echo "Installing go-swagger version $SWAGGER_COMMIT"
+    git clone https://github.com/go-swagger/go-swagger.git "$GOPATH/src/github.com/go-swagger/go-swagger"
+	cd $GOPATH/src/github.com/go-swagger/go-swagger
+    git checkout -q $SWAGGER_COMMIT
+	go build -o /usr/local/bin/swagger github.com/go-swagger/go-swagger/cmd/swagger
+}
+
 for prog in "$@"
 do
 	case $prog in
@@ -110,7 +118,9 @@ do
         bindata)
             install_bindata
             ;;
-
+        swagger)
+            install_swagger
+            ;;
 		*)
 			echo echo "Usage: $0 [tomlv|runc|containerd|tini|proxy]"
 			exit 1
