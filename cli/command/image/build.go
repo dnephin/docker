@@ -32,14 +32,15 @@ import (
 	"golang.org/x/net/context"
 )
 
-type buildOptions struct {
-	context        string
-	dockerfileName string
-	tags           opts.ListOpts
-	labels         opts.ListOpts
-	buildArgs      opts.ListOpts
-	extraHosts     opts.ListOpts
-	ulimits        *opts.UlimitOpt
+// BuildOptions that are used to run the command
+type BuildOptions struct {
+	Context        string
+	DockerfileName string
+	Tags           opts.ListOpts
+	Labels         opts.ListOpts
+	BuildArgs      opts.ListOpts
+	ExtraHosts     opts.ListOpts
+	Ulimits        *opts.UlimitOpt
 	memory         string
 	memorySwap     string
 	shmSize        opts.MemBytes
@@ -52,7 +53,7 @@ type buildOptions struct {
 	isolation      string
 	quiet          bool
 	noCache        bool
-	rm             bool
+	Rm             bool
 	forceRm        bool
 	pull           bool
 	cacheFrom      []string
@@ -65,12 +66,12 @@ type buildOptions struct {
 // NewBuildCommand creates a new `docker build` command
 func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 	ulimits := make(map[string]*units.Ulimit)
-	options := buildOptions{
-		tags:       opts.NewListOpts(validateTag),
-		buildArgs:  opts.NewListOpts(opts.ValidateEnv),
-		ulimits:    opts.NewUlimitOpt(&ulimits),
-		labels:     opts.NewListOpts(opts.ValidateEnv),
-		extraHosts: opts.NewListOpts(opts.ValidateExtraHost),
+	options := BuildOptions{
+		Tags:       opts.NewListOpts(validateTag),
+		BuildArgs:  opts.NewListOpts(opts.ValidateEnv),
+		Ulimits:    opts.NewUlimitOpt(&ulimits),
+		Labels:     opts.NewListOpts(opts.ValidateEnv),
+		ExtraHosts: opts.NewListOpts(opts.ValidateExtraHost),
 	}
 
 	cmd := &cobra.Command{
@@ -78,17 +79,17 @@ func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 		Short: "Build an image from a Dockerfile",
 		Args:  cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			options.context = args[0]
-			return runBuild(dockerCli, options)
+			options.Context = args[0]
+			return RunBuild(dockerCli, options)
 		},
 	}
 
 	flags := cmd.Flags()
 
-	flags.VarP(&options.tags, "tag", "t", "Name and optionally a tag in the 'name:tag' format")
-	flags.Var(&options.buildArgs, "build-arg", "Set build-time variables")
-	flags.Var(options.ulimits, "ulimit", "Ulimit options")
-	flags.StringVarP(&options.dockerfileName, "file", "f", "", "Name of the Dockerfile (Default is 'PATH/Dockerfile')")
+	flags.VarP(&options.Tags, "tag", "t", "Name and optionally a tag in the 'name:tag' format")
+	flags.Var(&options.BuildArgs, "build-arg", "Set build-time variables")
+	flags.Var(options.Ulimits, "ulimit", "Ulimit options")
+	flags.StringVarP(&options.DockerfileName, "file", "f", "", "Name of the Dockerfile (Default is 'PATH/Dockerfile')")
 	flags.StringVarP(&options.memory, "memory", "m", "", "Memory limit")
 	flags.StringVar(&options.memorySwap, "memory-swap", "", "Swap limit equal to memory plus swap: '-1' to enable unlimited swap")
 	flags.Var(&options.shmSize, "shm-size", "Size of /dev/shm")
@@ -99,9 +100,9 @@ func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.StringVar(&options.cpuSetMems, "cpuset-mems", "", "MEMs in which to allow execution (0-3, 0,1)")
 	flags.StringVar(&options.cgroupParent, "cgroup-parent", "", "Optional parent cgroup for the container")
 	flags.StringVar(&options.isolation, "isolation", "", "Container isolation technology")
-	flags.Var(&options.labels, "label", "Set metadata for an image")
+	flags.Var(&options.Labels, "label", "Set metadata for an image")
 	flags.BoolVar(&options.noCache, "no-cache", false, "Do not use cache when building the image")
-	flags.BoolVar(&options.rm, "rm", true, "Remove intermediate containers after a successful build")
+	flags.BoolVar(&options.Rm, "rm", true, "Remove intermediate containers after a successful build")
 	flags.BoolVar(&options.forceRm, "force-rm", false, "Always remove intermediate containers")
 	flags.BoolVarP(&options.quiet, "quiet", "q", false, "Suppress the build output and print image ID on success")
 	flags.BoolVar(&options.pull, "pull", false, "Always attempt to pull a newer version of the image")
@@ -110,7 +111,7 @@ func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.StringSliceVar(&options.securityOpt, "security-opt", []string{}, "Security options")
 	flags.StringVar(&options.networkMode, "network", "default", "Set the networking mode for the RUN instructions during build")
 	flags.SetAnnotation("network", "version", []string{"1.25"})
-	flags.Var(&options.extraHosts, "add-host", "Add a custom host-to-IP mapping (host:ip)")
+	flags.Var(&options.ExtraHosts, "add-host", "Add a custom host-to-IP mapping (host:ip)")
 
 	command.AddTrustVerificationFlags(flags)
 
@@ -137,8 +138,8 @@ func (out *lastProgressOutput) WriteProgress(prog progress.Progress) error {
 	return out.output.WriteProgress(prog)
 }
 
-func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
-
+// RunBuild from the command line options
+func RunBuild(dockerCli *command.DockerCli, options BuildOptions) error {
 	var (
 		buildCtx      io.ReadCloser
 		err           error
@@ -149,7 +150,7 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 		buildBuff     io.Writer
 	)
 
-	specifiedContext := options.context
+	specifiedContext := options.Context
 	progBuff = dockerCli.Out()
 	buildBuff = dockerCli.Out()
 	if options.quiet {
@@ -159,13 +160,13 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 
 	switch {
 	case specifiedContext == "-":
-		buildCtx, relDockerfile, err = build.GetContextFromReader(dockerCli.In(), options.dockerfileName)
+		buildCtx, relDockerfile, err = build.GetContextFromReader(dockerCli.In(), options.DockerfileName)
 	case isLocalDir(specifiedContext):
-		contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, options.dockerfileName)
+		contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, options.DockerfileName)
 	case urlutil.IsGitURL(specifiedContext):
-		tempDir, relDockerfile, err = build.GetContextFromGitURL(specifiedContext, options.dockerfileName)
+		tempDir, relDockerfile, err = build.GetContextFromGitURL(specifiedContext, options.DockerfileName)
 	case urlutil.IsURL(specifiedContext):
-		buildCtx, relDockerfile, err = build.GetContextFromURL(progBuff, specifiedContext, options.dockerfileName)
+		buildCtx, relDockerfile, err = build.GetContextFromURL(progBuff, specifiedContext, options.DockerfileName)
 	default:
 		return fmt.Errorf("unable to prepare context: path %q not found", specifiedContext)
 	}
@@ -278,13 +279,13 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 	}
 
 	authConfigs, _ := dockerCli.GetAllCredentials()
-	buildOptions := types.ImageBuildOptions{
+	BuildOptions := types.ImageBuildOptions{
 		Memory:         memory,
 		MemorySwap:     memorySwap,
-		Tags:           options.tags.GetAll(),
+		Tags:           options.Tags.GetAll(),
 		SuppressOutput: options.quiet,
 		NoCache:        options.noCache,
-		Remove:         options.rm,
+		Remove:         options.Rm,
 		ForceRemove:    options.forceRm,
 		PullParent:     options.pull,
 		Isolation:      container.Isolation(options.isolation),
@@ -296,18 +297,18 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 		CgroupParent:   options.cgroupParent,
 		Dockerfile:     relDockerfile,
 		ShmSize:        options.shmSize.Value(),
-		Ulimits:        options.ulimits.GetList(),
-		BuildArgs:      runconfigopts.ConvertKVStringsToMapWithNil(options.buildArgs.GetAll()),
+		Ulimits:        options.Ulimits.GetList(),
+		BuildArgs:      runconfigopts.ConvertKVStringsToMapWithNil(options.BuildArgs.GetAll()),
 		AuthConfigs:    authConfigs,
-		Labels:         runconfigopts.ConvertKVStringsToMap(options.labels.GetAll()),
+		Labels:         runconfigopts.ConvertKVStringsToMap(options.Labels.GetAll()),
 		CacheFrom:      options.cacheFrom,
 		SecurityOpt:    options.securityOpt,
 		NetworkMode:    options.networkMode,
 		Squash:         options.squash,
-		ExtraHosts:     options.extraHosts.GetAll(),
+		ExtraHosts:     options.ExtraHosts.GetAll(),
 	}
 
-	response, err := dockerCli.Client().ImageBuild(ctx, body, buildOptions)
+	response, err := dockerCli.Client().ImageBuild(ctx, body, BuildOptions)
 	if err != nil {
 		if options.quiet {
 			fmt.Fprintf(dockerCli.Err(), "%s", progBuff)
