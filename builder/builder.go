@@ -11,7 +11,7 @@ import (
 
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/backend"
+	backendtypes "github.com/docker/docker/api/types/backend"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/image"
 	"golang.org/x/net/context"
@@ -107,12 +107,10 @@ func (fi *HashedFileInfo) SetHash(h string) {
 type Backend interface {
 	// TODO: use digest reference instead of name
 
-	// GetImageOnBuild looks up a Docker image referenced by `name`.
-	GetImageOnBuild(name string) (Image, error)
+	// GetImage returns a Docker image referenced by `name`.
+	GetImage(context.Context, string, GetImageOptions) (Image, error)
 	// TagImageWithReference tags an image with newTag
 	TagImageWithReference(image.ID, reference.Named) error
-	// PullOnBuild tells Docker to pull image referenced by `name`.
-	PullOnBuild(ctx context.Context, name string, authConfigs map[string]types.AuthConfig, output io.Writer) (Image, error)
 	// ContainerAttachRaw attaches to container.
 	ContainerAttachRaw(cID string, stdin io.ReadCloser, stdout, stderr io.Writer, stream bool) error
 	// ContainerCreate creates a new Docker container and returns potential warnings
@@ -120,7 +118,7 @@ type Backend interface {
 	// ContainerRm removes a container specified by `id`.
 	ContainerRm(name string, config *types.ContainerRmConfig) error
 	// Commit creates a new Docker image from an existing Docker container.
-	Commit(string, *backend.ContainerCommitConfig) (string, error)
+	Commit(string, *backendtypes.ContainerCommitConfig) (string, error)
 	// ContainerKill stops the container execution abruptly.
 	ContainerKill(containerID string, sig uint64) error
 	// ContainerStart starts a new container
