@@ -177,22 +177,24 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 		tempDir, relDockerfile, err = build.GetContextFromGitURL(specifiedContext, options.dockerfileName)
 	case urlutil.IsURL(specifiedContext):
 		buildCtx, relDockerfile, err = build.GetContextFromURL(progBuff, specifiedContext, options.dockerfileName)
+		if err != nil && options.quiet {
+			fmt.Fprintln(dockerCli.Err(), progBuff)
+		}
 	default:
 		return errors.Errorf("unable to prepare context: path %q not found", specifiedContext)
 	}
 
 	if err != nil {
-		if options.quiet && urlutil.IsURL(specifiedContext) {
-			fmt.Fprintln(dockerCli.Err(), progBuff)
-		}
-		return errors.Errorf("unable to prepare context: %s", err)
+		return errors.Wrapf(err, "unable to prepare context")
 	}
 
+	// TODO: move this code into build.GetContextFromGitURL
 	if tempDir != "" {
 		defer os.RemoveAll(tempDir)
 		contextDir = tempDir
 	}
 
+	// TODO: move this code into build.GetContextFromLocalDir
 	if buildCtx == nil {
 		// And canonicalize dockerfile name to a platform-independent one
 		relDockerfile, err = archive.CanonicalTarNameForPath(relDockerfile)
@@ -200,46 +202,7 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 			return errors.Errorf("cannot canonicalize dockerfile path %s: %v", relDockerfile, err)
 		}
 
-		f, err := os.Open(filepath.Join(contextDir, ".dockerignore"))
-		if err != nil && !os.IsNotExist(err) {
-			return err
-		}
-		defer f.Close()
-
-		var excludes []string
-		if err == nil {
-			excludes, err = dockerignore.ReadAll(f)
-			if err != nil {
-				return err
-			}
-		}
-
-		if err := build.ValidateContextDirectory(contextDir, excludes); err != nil {
-			return errors.Errorf("Error checking context: '%s'.", err)
-		}
-
-		// If .dockerignore mentions .dockerignore or the Dockerfile
-		// then make sure we send both files over to the daemon
-		// because Dockerfile is, obviously, needed no matter what, and
-		// .dockerignore is needed to know if either one needs to be
-		// removed. The daemon will remove them for us, if needed, after it
-		// parses the Dockerfile. Ignore errors here, as they will have been
-		// caught by validateContextDirectory above.
-		if keep, _ := fileutils.Matches(".dockerignore", excludes); keep {
-			excludes = append(excludes, "!.dockerignore")
-		}
-		if keep, _ := fileutils.Matches(relDockerfile, excludes); keep && dockerfileCtx == nil {
-			excludes = append(excludes, "!"+relDockerfile)
-		}
-
-		compression := archive.Uncompressed
-		if options.compress {
-			compression = archive.Gzip
-		}
-		buildCtx, err = archive.TarWithOptions(contextDir, &archive.TarOptions{
-			Compression:     compression,
-			ExcludePatterns: excludes,
-		})
+		buildCtx, err = buildContextFromContextDirectory(contextDir, relDockerfile, dockerfileCtx == nil, options)
 		if err != nil {
 			return err
 		}
@@ -247,46 +210,10 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 
 	// replace Dockerfile if added dynamically
 	if dockerfileCtx != nil {
-		file, err := ioutil.ReadAll(dockerfileCtx)
-		dockerfileCtx.Close()
+		buildCtx, relDockerfile, err = addDockerfileToBuildContext(dockerfileCtx, buildCtx)
 		if err != nil {
 			return err
 		}
-		now := time.Now()
-		hdrTmpl := &tar.Header{
-			Mode:       0600,
-			Uid:        0,
-			Gid:        0,
-			ModTime:    now,
-			Typeflag:   tar.TypeReg,
-			AccessTime: now,
-			ChangeTime: now,
-		}
-		randomName := ".dockerfile." + stringid.GenerateRandomID()[:20]
-
-		buildCtx = archive.ReplaceFileTarWrapper(buildCtx, map[string]archive.TarModifierFunc{
-			randomName: func(_ string, h *tar.Header, content io.Reader) (*tar.Header, []byte, error) {
-				return hdrTmpl, file, nil
-			},
-			".dockerignore": func(_ string, h *tar.Header, content io.Reader) (*tar.Header, []byte, error) {
-				if h == nil {
-					h = hdrTmpl
-				}
-				extraIgnore := randomName + "\n"
-				b := &bytes.Buffer{}
-				if content != nil {
-					_, err := b.ReadFrom(content)
-					if err != nil {
-						return nil, nil, err
-					}
-				} else {
-					extraIgnore += ".dockerignore\n"
-				}
-				b.Write([]byte("\n" + extraIgnore))
-				return h, b.Bytes(), nil
-			},
-		})
-		relDockerfile = randomName
 	}
 
 	ctx := context.Background()
@@ -390,6 +317,102 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 	}
 
 	return nil
+}
+
+func buildContextFromContextDirectory(contextDir string, relDockerfile string, noDockerfileCtx bool, options buildOptions) (io.ReadCloser, error) {
+	excludes, err := readDockerignore(contextDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := build.ValidateContextDirectory(contextDir, excludes); err != nil {
+		return nil, errors.Errorf("Error checking context: '%s'.", err)
+	}
+
+	// If .dockerignore mentions .dockerignore or the Dockerfile
+	// then make sure we send both files over to the daemon
+	// because Dockerfile is, obviously, needed no matter what, and
+	// .dockerignore is needed to know if either one needs to be
+	// removed. The daemon will remove them for us, if needed, after it
+	// parses the Dockerfile. Ignore errors here, as they will have been
+	// caught by validateContextDirectory above.
+	if keep, _ := fileutils.Matches(".dockerignore", excludes); keep {
+		excludes = append(excludes, "!.dockerignore")
+	}
+	if keep, _ := fileutils.Matches(relDockerfile, excludes); keep && noDockerfileCtx {
+		excludes = append(excludes, "!"+relDockerfile)
+	}
+
+	compression := archive.Uncompressed
+	if options.compress {
+		compression = archive.Gzip
+	}
+	return archive.TarWithOptions(contextDir, &archive.TarOptions{
+		Compression:     compression,
+		ExcludePatterns: excludes,
+	})
+}
+
+func readDockerignore(contextDir string) ([]string, error) {
+	f, err := os.Open(filepath.Join(contextDir, ".dockerignore"))
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	defer f.Close()
+
+	var excludes []string
+	if err == nil {
+		excludes, err = dockerignore.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return excludes, nil
+}
+
+func addDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCloser) (io.ReadCloser, string, error) {
+	file, err := ioutil.ReadAll(dockerfileCtx)
+	dockerfileCtx.Close()
+	if err != nil {
+		return nil, "", err
+	}
+	now := time.Now()
+	hdrTmpl := &tar.Header{
+		Mode:       0600,
+		Uid:        0,
+		Gid:        0,
+		ModTime:    now,
+		Typeflag:   tar.TypeReg,
+		AccessTime: now,
+		ChangeTime: now,
+	}
+	randomName := ".dockerfile." + stringid.GenerateRandomID()[:20]
+
+	buildCtx = archive.ReplaceFileTarWrapper(buildCtx, map[string]archive.TarModifierFunc{
+		// Add the dockerfile with a random filename
+		randomName: func(_ string, h *tar.Header, content io.Reader) (*tar.Header, []byte, error) {
+			return hdrTmpl, file, nil
+		},
+		// Update .dockerignore to include the random filename
+		".dockerignore": func(_ string, h *tar.Header, content io.Reader) (*tar.Header, []byte, error) {
+			if h == nil {
+				h = hdrTmpl
+			}
+			extraIgnore := randomName + "\n"
+			b := &bytes.Buffer{}
+			if content != nil {
+				_, err := b.ReadFrom(content)
+				if err != nil {
+					return nil, nil, err
+				}
+			} else {
+				extraIgnore += ".dockerignore\n"
+			}
+			b.Write([]byte("\n" + extraIgnore))
+			return h, b.Bytes(), nil
+		},
+	})
+	return buildCtx, randomName, nil
 }
 
 func isLocalDir(c string) bool {
