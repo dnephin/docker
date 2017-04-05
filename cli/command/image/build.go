@@ -384,17 +384,16 @@ func addDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 			if h == nil {
 				h = hdrTmpl
 			}
-			extraIgnore := randomName + "\n"
+
 			b := &bytes.Buffer{}
 			if content != nil {
-				_, err := b.ReadFrom(content)
-				if err != nil {
+				if _, err := b.ReadFrom(content); err != nil {
 					return nil, nil, err
 				}
 			} else {
-				extraIgnore += ".dockerignore\n"
+				b.WriteString("\n.dockerignore")
 			}
-			b.Write([]byte("\n" + extraIgnore))
+			b.WriteString("\n" + randomName + "\n")
 			return h, b.Bytes(), nil
 		},
 	})

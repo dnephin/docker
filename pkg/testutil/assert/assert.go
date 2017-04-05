@@ -20,9 +20,9 @@ type TestingT interface {
 
 // Equal compare the actual value to the expected value and fails the test if
 // they are not equal.
-func Equal(t TestingT, actual, expected interface{}) {
+func Equal(t TestingT, actual, expected interface{}, extra ...string) {
 	if expected != actual {
-		fatal(t, "Expected '%v' (%T) got '%v' (%T)", expected, expected, actual, actual)
+		fatalWithExtra(t, extra, "Expected '%v' (%T) got '%v' (%T)", expected, expected, actual, actual)
 	}
 }
 
@@ -105,6 +105,14 @@ func NotNil(t TestingT, obj interface{}) {
 
 func fatal(t TestingT, format string, args ...interface{}) {
 	t.Fatalf(errorSource()+format, args...)
+}
+
+func fatalWithExtra(t TestingT, extra []string, format string, args ...interface{}) {
+	msg := fmt.Sprintf(errorSource()+format, args...)
+	if len(extra) > 0 {
+		msg += ": " + strings.Join(extra, ", ")
+	}
+	t.Fatalf(msg)
 }
 
 // See testing.decorate()
