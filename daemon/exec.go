@@ -14,11 +14,11 @@ import (
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/container/stream"
+	"github.com/docker/docker/daemon/ascii"
 	"github.com/docker/docker/daemon/exec"
 	"github.com/docker/docker/libcontainerd"
 	"github.com/docker/docker/pkg/pools"
 	"github.com/docker/docker/pkg/signal"
-	"github.com/docker/docker/pkg/term"
 )
 
 // Seconds to wait after sending TERM before trying KILL
@@ -104,7 +104,7 @@ func (d *Daemon) ContainerExecCreate(name string, config *types.ExecConfig) (str
 
 	keys := []byte{}
 	if config.DetachKeys != "" {
-		keys, err = term.ToBytes(config.DetachKeys)
+		keys, err = ascii.ToBytes(config.DetachKeys)
 		if err != nil {
 			err = fmt.Errorf("Invalid escape keys (%s) provided", config.DetachKeys)
 			return "", err

@@ -1,4 +1,4 @@
-package term
+package ascii
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 )
 
 // ASCII list the possible supported ASCII key sequence
-var ASCII = []string{
+var ascii = []string{
 	"ctrl-@",
 	"ctrl-a",
 	"ctrl-b",
@@ -47,7 +47,7 @@ func ToBytes(keys string) ([]byte, error) {
 next:
 	for _, key := range strings.Split(keys, ",") {
 		if len(key) != 1 {
-			for code, ctrl := range ASCII {
+			for code, ctrl := range ascii {
 				if ctrl == key {
 					codes = append(codes, byte(code))
 					continue next

@@ -10,9 +10,9 @@ import (
 	"github.com/docker/docker/api/types/backend"
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/container/stream"
+	"github.com/docker/docker/daemon/ascii"
 	"github.com/docker/docker/daemon/logger"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/docker/docker/pkg/term"
 )
 
 // ContainerAttach attaches to logs according to the config passed in. See ContainerAttachConfig.
@@ -20,7 +20,7 @@ func (daemon *Daemon) ContainerAttach(prefixOrName string, c *backend.ContainerA
 	keys := []byte{}
 	var err error
 	if c.DetachKeys != "" {
-		keys, err = term.ToBytes(c.DetachKeys)
+		keys, err = ascii.ToBytes(c.DetachKeys)
 		if err != nil {
 			return fmt.Errorf("Invalid detach keys (%s) provided", c.DetachKeys)
 		}
