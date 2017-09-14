@@ -11,6 +11,8 @@ import (
 
 // Middleware uses a list of plugins to
 // handle authorization in the API requests.
+// TODO: this should be named something other than Middleware with a method to
+// return the middleware function
 type Middleware struct {
 	mu      sync.Mutex
 	plugins []Plugin
@@ -20,9 +22,7 @@ type Middleware struct {
 // with a slice of plugins names.
 func NewMiddleware(names []string, pg plugingetter.PluginGetter) *Middleware {
 	SetPluginGetter(pg)
-	return &Middleware{
-		plugins: newPlugins(names),
-	}
+	return &Middleware{plugins: newPlugins(names)}
 }
 
 func (m *Middleware) getAuthzPlugins() []Plugin {
@@ -34,8 +34,8 @@ func (m *Middleware) getAuthzPlugins() []Plugin {
 // SetPlugins sets the plugin used for authorization
 func (m *Middleware) SetPlugins(names []string) {
 	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.plugins = newPlugins(names)
-	m.mu.Unlock()
 }
 
 // RemovePlugin removes a single plugin from this authz middleware chain
@@ -101,10 +101,17 @@ func (m *Middleware) WrapHandler(handler func(ctx context.Context, w http.Respon
 			return err
 		}
 
-		if errD != nil {
-			return errD
-		}
-
-		return nil
+		return errD
 	}
+}
+
+// ValidatePlugins validates that the requested plugins are AuthzDriver plugins
+// present on the host and available to the daemon
+func ValidatePlugins(requestedPlugins []string, pg plugingetter.PluginGetter) error {
+	for _, reqPlugin := range requestedPlugins {
+		if _, err := pg.Get(reqPlugin, AuthZApiImplements, plugingetter.Lookup); err != nil {
+			return err
+		}
+	}
+	return nil
 }

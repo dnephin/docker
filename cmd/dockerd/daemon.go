@@ -57,7 +57,6 @@ import (
 // DaemonCli represents the daemon CLI.
 type DaemonCli struct {
 	*config.Config
-	authzMiddleware *authorization.Middleware // authzMiddleware enables to dynamically reload the authorization plugins
 }
 
 // NewDaemonCli returns a daemon CLI
@@ -205,15 +204,19 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 
 	pluginStore := plugin.NewStore()
 
-	if err := cli.initMiddlewares(api, serverConfig, pluginStore); err != nil {
-		logrus.Fatalf("Error creating middlewares: %v", err)
-	}
+	authzPluginManager := initMiddlewares(cli.Config, api, serverConfig, pluginStore)
 
 	if system.LCOWSupported() {
 		logrus.Warnln("LCOW support is enabled - this feature is incomplete")
 	}
 
-	d, err := daemon.NewDaemon(cli.Config, registryService, containerdRemote, pluginStore)
+	d, err := daemon.NewDaemon(daemon.Options{
+		Config:           cli.Config,
+		RegistryService:  registryService,
+		ContainerdRemote: containerdRemote,
+		PluginStore:      pluginStore,
+		AuthzMiddleware:  authzPluginManager,
+	})
 	if err != nil {
 		return fmt.Errorf("Error starting daemon: %v", err)
 	}
@@ -221,7 +224,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 	d.StoreHosts(hosts)
 
 	// validate after NewDaemon has restored enabled plugins. Dont change order.
-	if err := validateAuthzPlugins(cli.Config.AuthorizationPlugins, pluginStore); err != nil {
+	if err := authorization.ValidatePlugins(cli.Config.AuthorizationPlugins, pluginStore); err != nil {
 		return fmt.Errorf("Error validating authorization plugin: %v", err)
 	}
 
@@ -356,20 +359,21 @@ func newRouterOptions(config *config.Config, daemon *daemon.Daemon) (routerOptio
 }
 
 type reloadSettings struct {
-	flags          *pflag.FlagSet
-	configFilename string
-	daemon         *daemon.Daemon
+	flags           *pflag.FlagSet
+	configFilename  string
+	daemon          *daemon.Daemon
+	authzMiddleware *authorization.Middleware
 }
 
 func (cli *DaemonCli) reloadConfig(settings reloadSettings) {
 	reload := func(config *config.Config) {
 
 		// Revalidate and reload the authorization plugins
-		if err := validateAuthzPlugins(config.AuthorizationPlugins, settings.daemon.PluginStore); err != nil {
+		if err := authorization.ValidatePlugins(config.AuthorizationPlugins, settings.daemon.PluginStore); err != nil {
 			logrus.Fatalf("Error validating authorization plugin: %v", err)
 			return
 		}
-		cli.authzMiddleware.SetPlugins(config.AuthorizationPlugins)
+		settings.authzMiddleware.SetPlugins(config.AuthorizationPlugins)
 
 		if err := settings.daemon.Reload(config); err != nil {
 			logrus.Errorf("Error reconfiguring the daemon: %v", err)
@@ -531,34 +535,21 @@ func initRouter(opts routerOptions) {
 	opts.api.InitRouter(routers...)
 }
 
-// TODO: remove this from cli and return the authzMiddleware
-func (cli *DaemonCli) initMiddlewares(s *apiserver.Server, cfg *apiserver.Config, pluginStore plugingetter.PluginGetter) error {
-	v := cfg.Version
+func initMiddlewares(config *config.Config, s *apiserver.Server, serverConfig *apiserver.Config, pluginStore plugingetter.PluginGetter) *authorization.Middleware {
+	v := serverConfig.Version
 
-	exp := middleware.NewExperimentalMiddleware(cli.Config.Experimental)
+	exp := middleware.NewExperimentalMiddleware(config.Experimental)
 	s.UseMiddleware(exp)
 
 	vm := middleware.NewVersionMiddleware(v, api.DefaultVersion, api.MinVersion)
 	s.UseMiddleware(vm)
 
-	if cfg.CorsHeaders != "" {
-		c := middleware.NewCORSMiddleware(cfg.CorsHeaders)
+	if serverConfig.CorsHeaders != "" {
+		c := middleware.NewCORSMiddleware(serverConfig.CorsHeaders)
 		s.UseMiddleware(c)
 	}
 
-	cli.authzMiddleware = authorization.NewMiddleware(cli.Config.AuthorizationPlugins, pluginStore)
-	cli.Config.AuthzMiddleware = cli.authzMiddleware
-	s.UseMiddleware(cli.authzMiddleware)
-	return nil
-}
-
-// validates that the plugins requested with the --authorization-plugin flag are valid AuthzDriver
-// plugins present on the host and available to the daemon
-func validateAuthzPlugins(requestedPlugins []string, pg plugingetter.PluginGetter) error {
-	for _, reqPlugin := range requestedPlugins {
-		if _, err := pg.Get(reqPlugin, authorization.AuthZApiImplements, plugingetter.Lookup); err != nil {
-			return err
-		}
-	}
-	return nil
+	authzMiddleware := authorization.NewMiddleware(config.AuthorizationPlugins, pluginStore)
+	s.UseMiddleware(authzMiddleware)
+	return authzMiddleware
 }

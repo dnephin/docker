@@ -40,6 +40,7 @@ import (
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/libcontainerd"
 	"github.com/docker/docker/migrate/v1"
+	"github.com/docker/docker/pkg/authorization"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/sysinfo"
@@ -505,9 +506,19 @@ func (daemon *Daemon) IsSwarmCompatible() error {
 	return daemon.configStore.IsSwarmCompatible()
 }
 
+// Options used to create a new Daemon
+type Options struct {
+	Config           *config.Config
+	RegistryService  registry.Service
+	ContainerdRemote libcontainerd.Remote
+	PluginStore      *plugin.Store
+	AuthzMiddleware  *authorization.Middleware
+}
+
 // NewDaemon sets up everything for the daemon to be able to service
 // requests from the webserver.
-func NewDaemon(config *config.Config, registryService registry.Service, containerdRemote libcontainerd.Remote, pluginStore *plugin.Store) (daemon *Daemon, err error) {
+func NewDaemon(options Options) (daemon *Daemon, err error) {
+	config := options.Config
 	setDefaultMtu(config)
 
 	// Ensure that we have a correct root key limit for launching containers.
@@ -630,8 +641,8 @@ func NewDaemon(config *config.Config, registryService registry.Service, containe
 		d.stores[runtime.GOOS] = daemonStore{graphDriver: driverName} // May still be empty. Layerstore init determines instead.
 	}
 
-	d.RegistryService = registryService
-	d.PluginStore = pluginStore
+	d.RegistryService = options.RegistryService
+	d.PluginStore = options.PluginStore
 	logger.RegisterPluginGetter(d.PluginStore)
 
 	metricsSockPath, err := d.listenMetricsSock()
@@ -645,11 +656,11 @@ func NewDaemon(config *config.Config, registryService registry.Service, containe
 		Root:               filepath.Join(config.Root, "plugins"),
 		ExecRoot:           getPluginExecRoot(config.Root),
 		Store:              d.PluginStore,
-		Executor:           containerdRemote,
-		RegistryService:    registryService,
+		Executor:           options.ContainerdRemote,
+		RegistryService:    options.RegistryService,
 		LiveRestoreEnabled: config.LiveRestoreEnabled,
 		LogPluginEvent:     d.LogPluginEvent, // todo: make private
-		AuthzMiddleware:    config.AuthzMiddleware,
+		AuthzMiddleware:    options.AuthzMiddleware,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create plugin manager")
@@ -796,11 +807,11 @@ func NewDaemon(config *config.Config, registryService registry.Service, containe
 	d.apparmorEnabled = sysInfo.AppArmor
 
 	d.linkIndex = newLinkIndex()
-	d.containerdRemote = containerdRemote
+	d.containerdRemote = options.ContainerdRemote
 
 	go d.execCommandGC()
 
-	d.containerd, err = containerdRemote.Client(d)
+	d.containerd, err = options.ContainerdRemote.Client(d)
 	if err != nil {
 		return nil, err
 	}
