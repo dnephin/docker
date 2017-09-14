@@ -41,9 +41,7 @@ type Server struct {
 // New returns a new instance of the server based on the specified configuration.
 // It allocates resources which will be needed for ServeAPI(ports, unix-sockets).
 func New(cfg *Config) *Server {
-	return &Server{
-		cfg: cfg,
-	}
+	return &Server{cfg: cfg}
 }
 
 // UseMiddleware appends a new middleware to the request chain.
@@ -56,10 +54,8 @@ func (s *Server) UseMiddleware(m middleware.Middleware) {
 func (s *Server) Accept(addr string, listeners ...net.Listener) {
 	for _, listener := range listeners {
 		httpServer := &HTTPServer{
-			srv: &http.Server{
-				Addr: addr,
-			},
-			l: listener,
+			srv: &http.Server{Addr: addr},
+			l:   listener,
 		}
 		s.servers = append(s.servers, httpServer)
 	}
@@ -148,11 +144,7 @@ func (s *Server) makeHTTPHandler(handler httputils.APIFunc) http.HandlerFunc {
 // This method also enables the Go profiler if enableProfiler is true.
 func (s *Server) InitRouter(routers ...router.Router) {
 	s.routers = append(s.routers, routers...)
-
-	m := s.createMux()
-	s.routerSwapper = &routerSwapper{
-		router: m,
-	}
+	s.routerSwapper = &routerSwapper{router: s.createMux()}
 }
 
 type pageNotFoundError struct{}
@@ -192,14 +184,12 @@ func (s *Server) createMux() *mux.Router {
 	return m
 }
 
-// Wait blocks the server goroutine until it exits.
-// It sends an error message if there is any error during
-// the API execution.
+// Wait blocks the server goroutine until it exits. It sends an error message
+// to the waitChan if there is an error serving the API
 func (s *Server) Wait(waitChan chan error) {
-	if err := s.serveAPI(); err != nil {
+	err := s.serveAPI()
+	if err != nil {
 		logrus.Errorf("ServeAPI error: %v", err)
-		waitChan <- err
-		return
 	}
-	waitChan <- nil
+	waitChan <- err
 }

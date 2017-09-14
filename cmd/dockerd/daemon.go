@@ -60,7 +60,6 @@ type DaemonCli struct {
 	configFile *string
 	flags      *pflag.FlagSet
 
-	api             *apiserver.Server
 	d               *daemon.Daemon
 	authzMiddleware *authorization.Middleware // authzMiddleware enables to dynamically reload the authorization plugins
 }
@@ -158,7 +157,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 		cli.Config.Hosts = make([]string, 1)
 	}
 
-	cli.api = apiserver.New(serverConfig)
+	api := apiserver.New(serverConfig)
 
 	var hosts []string
 
@@ -194,7 +193,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 		}
 		logrus.Debugf("Listener created for HTTP on %s (%s)", proto, addr)
 		hosts = append(hosts, protoAddrParts[1])
-		cli.api.Accept(addr, ls...)
+		api.Accept(addr, ls...)
 	}
 
 	registryService := registry.NewService(cli.Config.ServiceOptions)
@@ -203,7 +202,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 		return err
 	}
 	signal.Trap(func() {
-		cli.stop()
+		api.Close()
 		<-stopc // wait for daemonCli.start() to return
 	}, logrus.StandardLogger())
 
@@ -212,7 +211,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 
 	pluginStore := plugin.NewStore()
 
-	if err := cli.initMiddlewares(cli.api, serverConfig, pluginStore); err != nil {
+	if err := cli.initMiddlewares(api, serverConfig, pluginStore); err != nil {
 		logrus.Fatalf("Error creating middlewares: %v", err)
 	}
 
@@ -281,7 +280,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 	if err != nil {
 		return err
 	}
-	routerOptions.api = cli.api
+	routerOptions.api = api
 	routerOptions.cluster = c
 
 	initRouter(routerOptions)
@@ -297,7 +296,7 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 	// We need to start it as a goroutine and wait on it so
 	// daemon doesn't exit
 	serveAPIWait := make(chan error)
-	go cli.api.Wait(serveAPIWait)
+	go api.Wait(serveAPIWait)
 
 	// after the daemon is done setting up we can notify systemd api
 	notifySystem()
@@ -308,11 +307,8 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 	c.Cleanup()
 	shutdownDaemon(d)
 	containerdRemote.Cleanup()
-	if errAPI != nil {
-		return fmt.Errorf("Shutting down due to ServeAPI error: %v", errAPI)
-	}
 
-	return nil
+	return errors.Wrapf(errAPI, "shutting down due to error serving the API")
 }
 
 type routerOptions struct {
@@ -393,10 +389,6 @@ func (cli *DaemonCli) reloadConfig() {
 	if err := config.Reload(*cli.configFile, cli.flags, reload); err != nil {
 		logrus.Error(err)
 	}
-}
-
-func (cli *DaemonCli) stop() {
-	cli.api.Close()
 }
 
 // shutdownDaemon just wraps daemon.Shutdown() to handle a timeout in case
