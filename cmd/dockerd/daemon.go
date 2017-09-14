@@ -57,10 +57,6 @@ import (
 // DaemonCli represents the daemon CLI.
 type DaemonCli struct {
 	*config.Config
-	configFile *string
-	flags      *pflag.FlagSet
-
-	d               *daemon.Daemon
 	authzMiddleware *authorization.Middleware // authzMiddleware enables to dynamically reload the authorization plugins
 }
 
@@ -81,8 +77,6 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 	if cli.Config, err = loadDaemonCliConfig(opts); err != nil {
 		return err
 	}
-	cli.configFile = &opts.configFile
-	cli.flags = opts.flags
 
 	if cli.Config.Debug {
 		debug.Enable()
@@ -274,8 +268,6 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 
 	logrus.Info("Daemon has completed initialization")
 
-	cli.d = d
-
 	routerOptions, err := newRouterOptions(cli.Config, d)
 	if err != nil {
 		return err
@@ -290,7 +282,11 @@ func (cli *DaemonCli) start(opts *daemonOptions) (err error) {
 	defer cancel()
 	go d.ProcessClusterNotifications(watchCtx, watchStream)
 
-	cli.setupConfigReloadTrap()
+	cli.setupConfigReloadTrap(reloadSettings{
+		flags:          opts.flags,
+		configFilename: opts.configFile,
+		daemon:         d,
+	})
 
 	// The serve API routine never exits unless an error occurs
 	// We need to start it as a goroutine and wait on it so
@@ -359,17 +355,23 @@ func newRouterOptions(config *config.Config, daemon *daemon.Daemon) (routerOptio
 	}, nil
 }
 
-func (cli *DaemonCli) reloadConfig() {
+type reloadSettings struct {
+	flags          *pflag.FlagSet
+	configFilename string
+	daemon         *daemon.Daemon
+}
+
+func (cli *DaemonCli) reloadConfig(settings reloadSettings) {
 	reload := func(config *config.Config) {
 
 		// Revalidate and reload the authorization plugins
-		if err := validateAuthzPlugins(config.AuthorizationPlugins, cli.d.PluginStore); err != nil {
+		if err := validateAuthzPlugins(config.AuthorizationPlugins, settings.daemon.PluginStore); err != nil {
 			logrus.Fatalf("Error validating authorization plugin: %v", err)
 			return
 		}
 		cli.authzMiddleware.SetPlugins(config.AuthorizationPlugins)
 
-		if err := cli.d.Reload(config); err != nil {
+		if err := settings.daemon.Reload(config); err != nil {
 			logrus.Errorf("Error reconfiguring the daemon: %v", err)
 			return
 		}
@@ -386,7 +388,7 @@ func (cli *DaemonCli) reloadConfig() {
 		}
 	}
 
-	if err := config.Reload(*cli.configFile, cli.flags, reload); err != nil {
+	if err := config.Reload(settings.configFilename, settings.flags, reload); err != nil {
 		logrus.Error(err)
 	}
 }

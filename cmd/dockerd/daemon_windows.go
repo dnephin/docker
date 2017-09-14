@@ -49,7 +49,7 @@ func notifyShutdown(err error) {
 }
 
 // setupConfigReloadTrap configures a Win32 event to reload the configuration.
-func (cli *DaemonCli) setupConfigReloadTrap() {
+func (cli *DaemonCli) setupConfigReloadTrap(settings reloadSettings) {
 	go func() {
 		sa := windows.SecurityAttributes{
 			Length: 0,
@@ -59,7 +59,7 @@ func (cli *DaemonCli) setupConfigReloadTrap() {
 			logrus.Debugf("Config reload - waiting signal at %s", ev)
 			for {
 				windows.WaitForSingleObject(h, windows.INFINITE)
-				cli.reloadConfig()
+				cli.reloadConfig(settings)
 			}
 		}
 	}()

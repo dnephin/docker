@@ -36,12 +36,12 @@ func getDaemonConfDir(_ string) string {
 }
 
 // setupConfigReloadTrap configures the USR2 signal to reload the configuration.
-func (cli *DaemonCli) setupConfigReloadTrap() {
+func (cli *DaemonCli) setupConfigReloadTrap(settings reloadSettings) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, unix.SIGHUP)
 	go func() {
 		for range c {
-			cli.reloadConfig()
+			cli.reloadConfig(settings)
 		}
 	}()
 }
