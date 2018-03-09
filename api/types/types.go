@@ -488,11 +488,6 @@ type NetworkDisconnect struct {
 	Force     bool
 }
 
-// Checkpoint represents the details of a checkpoint
-type Checkpoint struct {
-	Name string // Name is the name of the checkpoint
-}
-
 // Runtime describes an OCI runtime
 type Runtime struct {
 	Path string   `json:"path"`
