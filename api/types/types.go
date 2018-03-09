@@ -488,12 +488,6 @@ type NetworkDisconnect struct {
 	Force     bool
 }
 
-// NetworkInspectOptions holds parameters to inspect network
-type NetworkInspectOptions struct {
-	Scope   string
-	Verbose bool
-}
-
 // Checkpoint represents the details of a checkpoint
 type Checkpoint struct {
 	Name string // Name is the name of the checkpoint
@@ -555,21 +549,11 @@ type SecretCreateResponse struct {
 	ID string
 }
 
-// SecretListOptions holds parameters to list secrets
-type SecretListOptions struct {
-	Filters filters.Args
-}
-
 // ConfigCreateResponse contains the information returned to a client
 // on the creation of a new config.
 type ConfigCreateResponse struct {
 	// ID is the id of the created config.
 	ID string
-}
-
-// ConfigListOptions holds parameters to list configs
-type ConfigListOptions struct {
-	Filters filters.Args
 }
 
 // PushResult contains the tag, manifest digest, and manifest size from the

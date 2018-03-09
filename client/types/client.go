@@ -1,10 +1,11 @@
-package types // import "github.com/docker/docker/api/types"
+package types // import "github.com/docker/docker/client/types"
 
 import (
 	"bufio"
 	"io"
 	"net"
 
+	apitypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	units "github.com/docker/go-units"
@@ -166,7 +167,7 @@ type ImageBuildOptions struct {
 	// at all (nil). See the parsing of buildArgs in
 	// api/server/router/build/build_routes.go for even more info.
 	BuildArgs   map[string]*string
-	AuthConfigs map[string]AuthConfig
+	AuthConfigs map[string]apitypes.AuthConfig
 	Context     io.Reader
 	Labels      map[string]string
 	// squash the resulting image's layers to the parent
@@ -373,7 +374,7 @@ type PluginInstallOptions struct {
 	RegistryAuth          string // RegistryAuth is the base64 encoded credentials for the registry
 	RemoteRef             string // RemoteRef is the plugin name on the registry
 	PrivilegeFunc         RequestPrivilegeFunc
-	AcceptPermissionsFunc func(PluginPrivileges) (bool, error)
+	AcceptPermissionsFunc func(apitypes.PluginPrivileges) (bool, error)
 	Args                  []string
 }
 
