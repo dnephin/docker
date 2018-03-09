@@ -17,8 +17,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// CommonAPIClient is the common methods between stable and experimental versions of APIClient.
-type CommonAPIClient interface {
+// APIClient interface for communicating with the Engine API.
+type APIClient interface {
 	ConfigAPIClient
 	ContainerAPIClient
 	DistributionAPIClient
@@ -31,6 +31,7 @@ type CommonAPIClient interface {
 	SecretAPIClient
 	SystemAPIClient
 	VolumeAPIClient
+	ExperimentalAPI
 	ClientVersion() string
 	DaemonHost() string
 	ServerVersion(ctx context.Context) (types.Version, error)
@@ -38,6 +39,21 @@ type CommonAPIClient interface {
 	NegotiateAPIVersionPing(types.Ping)
 	DialSession(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error)
 	Close() error
+}
+
+// Ensure that Client always implements APIClient.
+var _ APIClient = &Client{}
+
+// ExperimentalAPI methods are only available for engines which have experimental mode enabled.
+type ExperimentalAPI interface {
+	CheckpointAPIClient
+}
+
+// CheckpointAPIClient defines API client methods for the checkpoints
+type CheckpointAPIClient interface {
+	CheckpointCreate(ctx context.Context, container string, options types.CheckpointCreateOptions) error
+	CheckpointDelete(ctx context.Context, container string, options types.CheckpointDeleteOptions) error
+	CheckpointList(ctx context.Context, container string, options types.CheckpointListOptions) ([]types.Checkpoint, error)
 }
 
 // ContainerAPIClient defines API client methods for the containers
